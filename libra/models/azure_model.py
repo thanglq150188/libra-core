@@ -87,8 +87,8 @@ class AzureOpenAIModel(ModelBackend):
         generator = self.client.chat.completions.create(**kwargs)
         for chunk in generator:            
             if len(chunk.choices) > 0:
-                if chunk.choices[0].delta.content:
-                    yield chunk.json() 
+                if chunk.choices[0].delta.content or chunk.choices[0].delta.tool_calls:
+                    yield chunk.json()
                 
 
 if __name__ == "__main__":
