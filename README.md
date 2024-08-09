@@ -10,12 +10,15 @@ This project uses Poetry for dependency management. To set up and run the projec
 1. Ensure you have Python and Poetry installed on your system.
 
 2. Clone the repository:
+```
 git clone https://github.com/your-username/libra-core.git
 cd libra-core
+```
 
 3. Install dependencies using Poetry:
+```
 poetry install
-
+```
 ## Usage
 
 To run the API server:
