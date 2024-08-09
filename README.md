@@ -1,7 +1,7 @@
 # Libra Core
 
 ## Description
-Libra Core is a Python project that provides [brief description of what your project does].
+Libra Core is a python core project for libra chatbot
 
 ## Installation
 
@@ -19,7 +19,10 @@ poetry install
 ## Usage
 
 To run the API server:
-poetry run python entrypoints/openai/api_server.py
+```
+poetry shell
+python entrypoints/openai/api_server.py
+```
 
 ## Project Structure
 - `entrypoints/openai/`: Contains the API server code
