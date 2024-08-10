@@ -57,7 +57,7 @@ if __name__ == "__main__":
     from libra.models.model_factory import ModelFactory
     
     model = ModelFactory.create(
-        model_label=ModelLabel.GPT_3_5_TURBO,
+        model_label=ModelLabel.GPT_4o_mini,
         model_config_dict={
             "temperature": 0.0
         },
@@ -65,7 +65,7 @@ if __name__ == "__main__":
     
     # Prepare the input messages
     messages = [
-        {"role": "user", "content": "là lá la, con chim xanh!!!!"}
+        {"role": "user", "content": "ta chính là Nham Quỷ trong truyền thuyết đây! Hãy run sợ đi, haha!!"}
     ]
 
     # Run the model with the input messages

@@ -5,25 +5,21 @@ import json
 from libra.models.model_factory import ModelFactory
 from libra.types.typing import ModelLabel
 from typing import Dict, Any
+from libra.config import ChatGPTConfig
 
 app = FastAPI()
 
 async def stream_response(data: Dict[str, Any]):
     messages = data.get("messages", [])
-    # Extract other parameters as needed
-    temperature = data.get("temperature", 0.0)
-    model_label = data.get("model_label", ModelLabel.AZURE_GPT_4o)
     
     # Create model with dynamic parameters
     model = ModelFactory.create(
-        model_label=model_label,
-        model_config_dict={
-            "temperature": temperature
-        },
+        model_label=ModelLabel.GPT_4o,
+        model_config_dict=ChatGPTConfig().__dict__,
     )
     
     response = model.stream(messages=messages)
-    for chunk in response:
+    for chunk in response: # type: ignore
         chunk_delta = json.loads(chunk)['choices'][0]['delta']
         if 'content' in chunk_delta:
             yield f"data: {chunk}\n\n"

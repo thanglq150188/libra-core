@@ -17,6 +17,8 @@ pytest = "^8.3.2"
 pymilvus = "^2.4.5"
 fastapi = "^0.112.0"
 uvicorn = "^0.30.5"
+jsonschema = "^4.23.0"
+docstring-parser = "^0.16"
 
 
 [build-system]
