@@ -15,7 +15,7 @@ async def stream_response(data: Dict[str, Any]):
     
     # Create model with dynamic parameters
     model = ModelFactory.create(
-        model_label=ModelLabel.GPT_4o,
+        model_label=ModelLabel.AZURE_GPT_4o,
         model_config_dict=ChatGPTConfig(stream=stream).__dict__,
     )
     

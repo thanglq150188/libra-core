@@ -19,6 +19,7 @@ fastapi = "^0.112.0"
 uvicorn = "^0.30.5"
 jsonschema = "^4.23.0"
 docstring-parser = "^0.16"
+qdrant-client = "^1.10.1"
 
 
 [tool.poetry.group.dev.dependencies]

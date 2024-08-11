@@ -14,7 +14,8 @@
 from .enums import (
     EmbeddingModelType,
     ModelCompany,
-    ModelLabel
+    ModelLabel,
+    VectorDistance
 )
 from .openai_types import (
     ChatCompletion,
@@ -33,6 +34,7 @@ __all__ = [
     'EmbeddingModelType',
     'ModelCompany',
     'ModelLabel',
+    'VectorDistance',
     'Choice',
     'ChatCompletion',
     'ChatCompletionChunk',

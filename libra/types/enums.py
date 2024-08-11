@@ -52,6 +52,19 @@ class EmbeddingModelType(Enum):
             return 3072
         else:
             raise ValueError(f"Unknown model type {self}.")
+        
+        
+class VectorDistance(Enum):
+    r"""Distance metrics used in a vector database."""
+
+    DOT = "dot"
+    r"""Dot product. https://en.wikipedia.org/wiki/Dot_product"""
+
+    COSINE = "cosine"
+    r"""Cosine similarity. https://en.wikipedia.org/wiki/Cosine_similarity"""
+
+    EUCLIDEAN = "euclidean"
+    r"""Euclidean distance. https://en.wikipedia.org/wiki/Euclidean_distance"""
 
 
-__all__ = ["ModelLabel", "ModelCompany", "EmbeddingModelType"]
+__all__ = ["ModelLabel", "ModelCompany", "EmbeddingModelType", "VectorDistance"]
