@@ -1,4 +1,4 @@
-from .base import ModelBackend
+from .base_model import ModelBackend
 from .openai_model import OpenAIModel
 from .model_factory import ModelFactory
 from .azure_model import AzureOpenAIModel

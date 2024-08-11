@@ -1,5 +1,5 @@
-from libra.types.typing import ModelLabel, ModelCompany
-from libra.models.base import ModelBackend
+from libra.types.enums import ModelLabel, ModelCompany
+from libra.models.base_model import ModelBackend
 from libra.models.openai_model import OpenAIModel
 from libra.models.azure_model import AzureOpenAIModel
 from typing import Dict

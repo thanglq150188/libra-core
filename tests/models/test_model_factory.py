@@ -55,30 +55,26 @@ if __name__ == "__main__":
     load_dotenv(override=True)
     
     from libra.models.model_factory import ModelFactory
+    from libra.config import ChatGPTConfig
     
     model = ModelFactory.create(
         model_label=ModelLabel.GPT_4o_mini,
-        model_config_dict={
-            "temperature": 0.0
-        },
+        model_config_dict=ChatGPTConfig(stream=True).__dict__,
     )
     
     # Prepare the input messages
     messages = [
-        {"role": "user", "content": "ta chính là Nham Quỷ trong truyền thuyết đây! Hãy run sợ đi, haha!!"}
+        {"role": "user", "content": "cá mập có béo không?"}
     ]
 
     # Run the model with the input messages
     # response = model.stream(messages=messages, tools=tools)
-    response = model.stream(messages=messages)
+    response = model.run(messages=messages)
     
     import json
     
-    # print(response)
-    # for func in json.loads(response)['choices'][0]['message']['tool_calls']:
-    #     print(func)
-    for chunk in response: # type: ignore
-        chunk_delta = json.loads(chunk)['choices'][0]['delta']
-        print(chunk_delta['content'], end='')
-        # print(chunk)
-    print()
+    if model.stream:
+        for chunk in response: # type: ignore
+            print(chunk.choices[0].delta.content, end='')
+    else:
+        print(response.choices[0].message.content) # type: ignore

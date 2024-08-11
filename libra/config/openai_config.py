@@ -101,7 +101,7 @@ class ChatGPTConfig(BaseConfig):
             are present.
     """
 
-    temperature: float = 0.2  # openai default: 1.0
+    temperature: float = 0.0  # openai default: 1.0
     top_p: float = 1.0
     n: int = 1
     stream: bool = True

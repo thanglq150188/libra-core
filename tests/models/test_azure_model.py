@@ -1,12 +1,13 @@
 from libra.models import AzureOpenAIModel
 from libra.types import ModelLabel
+from libra.config import ChatGPTConfig
 
 if __name__ == "__main__":
     from dotenv import load_dotenv
     
     load_dotenv(override=True)
     
-    model = AzureOpenAIModel(ModelLabel.AZURE_GPT_4o, {"temperature":0.0})
+    model = AzureOpenAIModel(ModelLabel.AZURE_GPT_4o, ChatGPTConfig().__dict__)
     
     # Prepare the input messages
     messages = [
@@ -14,11 +15,12 @@ if __name__ == "__main__":
     ]
 
     # Run the model with the input messages
-    response = model.stream(messages=messages)
+    response = model.run(messages=messages)
     
     import json
     
-    for chunk in response:
-        # print(chunk)
-        print(json.loads(chunk)['choices'][0]['delta']['content'], end='')
-    # print(json.loads(response)['choices'][0]['message']['content'])
+    if model.stream:
+        for chunk in response:
+            print(chunk.json())
+    else:
+        print(response.json()) # type: ignore

@@ -3,7 +3,7 @@ from fastapi.responses import StreamingResponse
 from dotenv import load_dotenv
 import json
 from libra.models.model_factory import ModelFactory
-from libra.types.typing import ModelLabel
+from libra.types.enums import ModelLabel
 from typing import Dict, Any
 from libra.config import ChatGPTConfig
 
@@ -11,18 +11,20 @@ app = FastAPI()
 
 async def stream_response(data: Dict[str, Any]):
     messages = data.get("messages", [])
+    stream = data.get("stream", True)
     
     # Create model with dynamic parameters
     model = ModelFactory.create(
         model_label=ModelLabel.GPT_4o,
-        model_config_dict=ChatGPTConfig().__dict__,
+        model_config_dict=ChatGPTConfig(stream=stream).__dict__,
     )
     
-    response = model.stream(messages=messages)
-    for chunk in response: # type: ignore
-        chunk_delta = json.loads(chunk)['choices'][0]['delta']
-        if 'content' in chunk_delta:
-            yield f"data: {chunk}\n\n"
+    response = model.run(messages=messages)
+    if model.stream:
+        for chunk in response: # type: ignore
+            yield f"data: {chunk.json()}\n\n"
+    else:
+        yield f"data: {response.json()}\n\n" # type: ignore
 
 @app.post("/chat/completions")
 async def stream_model_response(request: Request):
