@@ -3,14 +3,14 @@ from libra.functions import OpenAIFunction
 # Define a sample function
 def sample_function(input_text: str, threshold: float) -> bool:
     """
-    A sample function that checks if the length of the input text exceeds a given threshold.
+    Một hàm mẫu kiểm tra xem độ dài của văn bản đầu vào có vượt quá ngưỡng cho trước hay không.
 
     Args:
-        input_text (str): The input text to check.
-        threshold (float): The threshold length.
+        input_text (str): Văn bản đầu vào cần kiểm tra.
+        threshold (float): Độ dài ngưỡng.
 
     Returns:
-        bool: True if the length of the input text exceeds the threshold, False otherwise.
+        bool: True nếu độ dài của văn bản đầu vào vượt quá ngưỡng, False trong trường hợp ngược lại.
     """
     return len(input_text) > threshold
 
