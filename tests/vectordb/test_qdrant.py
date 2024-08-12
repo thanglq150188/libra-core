@@ -1,37 +1,84 @@
-from typing import List
+import shutil
+import tempfile
 
-from libra.vectordb import VectorRecord
-from libra.vectordb import VectorDBQuery
-
-from libra.vectordb import QdrantStorage
+from libra.vectordb import QdrantStorage, VectorDBQuery, VectorRecord
 
 
-def main():
-    # Initialize QdrantStorage with local storage
-    storage = QdrantStorage(path='qdrant_demo', vector_dim=512, delete_collection_on_del=True)
+def test_multiple_local_clients() -> None:
+    tmpdir = tempfile.mkdtemp()
+    storage1 = QdrantStorage(
+        vector_dim=4,
+        path=tmpdir,
+        collection_name="collection1",
+        delete_collection_on_del=True,
+    )
+    storage2 = QdrantStorage(
+        vector_dim=4,
+        path=tmpdir,
+        collection_name="collection2",
+        delete_collection_on_del=True,
+    )
 
-    # Add sample vectors to the storage
-    sample_vectors = [
-        VectorRecord(id="1", vector=[0.1, 0.2, 0.3], payload={"name": "Vector 1"}),
-        VectorRecord(id="2", vector=[0.4, 0.5, 0.6], payload={"name": "Vector 2"}),
-        VectorRecord(id="3", vector=[0.7, 0.8, 0.9], payload={"name": "Vector 3"}),
+    # Add vectors to storage1
+    vectors1 = [
+        VectorRecord(vector=[0.1, 0.1, 0.1, 0.1]),
+        VectorRecord(vector=[0.1, -0.1, -0.1, 0.1]),
     ]
-    storage.add(sample_vectors)
+    storage1.add(records=vectors1)
 
-    # Query the storage for similar vectors
-    query = VectorDBQuery(query_vector=[0.5, 0.5, 0.5], top_k=2)
-    results = storage.query(query)
+    # Add vectors to storage2
+    vectors2 = [
+        VectorRecord(
+            vector=[-0.1, 0.1, -0.1, 0.1],
+            payload={"message": "text"},
+        ),
+        VectorRecord(
+            vector=[-0.1, 0.1, 0.1, 0.1],
+            payload={"message": "text", "number": 1},
+        ),
+    ]
+    storage2.add(records=vectors2)
 
-    print("Query Results:")
-    for result in results:
-        print(result)
+    # Query and check results from storage1
+    query1 = VectorDBQuery(query_vector=[1.0, 1.0, 1.0, 1.0], top_k=1)
+    result1 = storage1.query(query1)
+    assert result1[0].record.id == vectors1[0].id
 
-    # Delete a vector by its ID
-    storage.delete(ids=["2"])
+    # Query and check results from storage2
+    query2 = VectorDBQuery(query_vector=[-1.0, 1.0, -1.0, 1.0], top_k=1)
+    result2 = storage2.query(query2)
+    assert result2[0].record.id == vectors2[0].id
+    assert result2[0].record.payload == {"message": "text"}
 
-    # Clear the storage
-    storage.clear()
+    # Clear and check status for each storage
+    storage1.clear()
+    status1 = storage1.status()
+    assert status1.vector_count == 0
+
+    storage2.clear()
+    status2 = storage2.status()
+    assert status2.vector_count == 0
+
+    shutil.rmtree(tmpdir)
 
 
-if __name__ == "__main__":
-    main()
+def test_existing_collection():
+    tmpdir = tempfile.mkdtemp()
+    storage = QdrantStorage(
+        vector_dim=4,
+        path=tmpdir,
+        collection_name="test_collection",
+    )
+    vectors = [
+        VectorRecord(vector=[0.1, 0.1, 0.1, 0.1]),
+        VectorRecord(vector=[0.1, -0.1, -0.1, 0.1]),
+    ]
+    storage.add(records=vectors)
+    assert storage.status().vector_count == 2
+
+    storage2 = QdrantStorage(
+        vector_dim=4,
+        path=tmpdir,
+        collection_name="test_collection",
+    )
+    assert storage2.status().vector_count == 2
