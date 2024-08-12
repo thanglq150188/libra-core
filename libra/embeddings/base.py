@@ -6,7 +6,7 @@ class BaseEmbedding(ABC):
     r"""Abstract base class for text embedding functionalities."""
     
     @abstractmethod
-    def embed_list(self, texts: list[str], **kwargs: Any) -> list[list[float]]:
+    def embed_list(self, objs: list[str], **kwargs: Any) -> list[list[float]]:
         """
         Abstract method for embedding a list of text strings into a list of numerical vectors.
 
@@ -22,7 +22,7 @@ class BaseEmbedding(ABC):
     
     def embed(
         self,
-        text: str,
+        obj: str,
         **kwargs: Any,
     ) -> list[float]:
         r"""Generates an embedding for the given text.
@@ -35,7 +35,7 @@ class BaseEmbedding(ABC):
             list[float]: A list of floating-point numbers representing the
                 generated embedding.
         """
-        return self.embed_list([text], **kwargs)[0]
+        return self.embed_list([obj], **kwargs)[0]
     
     @abstractmethod
     def get_output_dim(self) -> int:

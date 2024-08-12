@@ -64,7 +64,7 @@ if __name__ == "__main__":
     
     # Prepare the input messages
     messages = [
-        {"role": "user", "content": "cá mập có béo không?"}
+        {"role": "user", "content": "cuộc sống có giống cuộc đời không ?"}
     ]
 
     # Run the model with the input messages
@@ -78,3 +78,5 @@ if __name__ == "__main__":
             print(chunk.choices[0].delta.content, end='')
     else:
         print(response.choices[0].message.content) # type: ignore
+        
+    print()
