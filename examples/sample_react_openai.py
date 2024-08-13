@@ -121,8 +121,7 @@ function_schemas = [
 ]
     
     
-QUESTION_PROMPT = "(344 + 5786) * 101 bằng mấy"
-    
+QUESTION_PROMPT = "Hello, how are you !"
     
 # Initial "chat" messages
 messages = [

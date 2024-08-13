@@ -105,7 +105,6 @@ class DocxFile(File):
             DocxFile: A DocxFile object.
         """
         import docx2txt
-
         text = docx2txt.process(file)
         text = strip_consecutive_newlines(text)
         # Create a dictionary with the extracted text
@@ -176,6 +175,37 @@ class TxtFile(File):
         file.seek(0)
         return cls(name=file.name, id=file_id, docs=[doc])
 
+class CsvFile(File):
+    @classmethod
+    def from_bytes(cls, file: BytesIO) -> "CsvFile":
+        r"""Creates a CsvFile object from a BytesIO object.
+
+        Args:
+            file (BytesIO): A BytesIO object representing the contents of the
+                csv file.
+
+        Returns:
+            CsvFile: A CsvFile object.
+        """
+        # Parse the CSV data from the file        
+        docs = []
+        
+        import pandas as pd
+        
+        df = pd.read_csv(file)
+        df = df.dropna()
+        
+        for i, row in df.iterrows():
+            doc = {
+                'page_content': row.to_json(),
+            }
+            docs.append(doc)
+            
+        # Calculate a unique identifier for the file
+        file_id = md5(file.getvalue()).hexdigest()
+        # Reset the file pointer to the beginning
+        file.seek(0)
+        return cls(name=file.name, id=file_id, docs=docs)
 
 class JsonFile(File):
     @classmethod
@@ -191,13 +221,18 @@ class JsonFile(File):
         """
         # Parse the JSON data from the file
         data = json.load(file)
-        # Create a dictionary with the parsed data
-        doc = {"page_content": json.dumps(data)}
+        
+        docs = []
+        for i in range(len(data)):
+            content = json.dumps(data[i])
+            doc = {"page_content": content.strip(), "page": i + 1}
+            docs.append(doc)
+            
         # Calculate a unique identifier for the file
         file_id = md5(file.getvalue()).hexdigest()
         # Reset the file pointer to the beginning
         file.seek(0)
-        return cls(name=file.name, id=file_id, docs=[doc])
+        return cls(name=file.name, id=file_id, docs=docs)
 
 
 class HtmlFile(File):
@@ -253,6 +288,8 @@ def read_file(file: BytesIO) -> File:
         return JsonFile.from_bytes(file)
     elif file.name.lower().endswith(".html"):
         return HtmlFile.from_bytes(file)
+    elif file.name.lower().endswith(".csv"):
+        return CsvFile.from_bytes(file)
     else:
         raise NotImplementedError(
             f"File type {file.name.split('.')[-1]} not supported"

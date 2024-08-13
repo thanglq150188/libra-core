@@ -28,7 +28,7 @@ class FakeFile(File):
 UNIT_TESTS_ROOT = Path(__file__).parent.resolve()
 TESTS_ROOT = UNIT_TESTS_ROOT.parent.resolve()
 PROJECT_ROOT = TESTS_ROOT.parent.resolve()
-RESOURCE_ROOT = PROJECT_ROOT / "test"
+RESOURCE_ROOT = PROJECT_ROOT / "tests"
 SAMPLE_ROOT = RESOURCE_ROOT / "data_samples"
 
 

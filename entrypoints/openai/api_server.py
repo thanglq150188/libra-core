@@ -38,4 +38,6 @@ if __name__ == "__main__":
     load_dotenv(override=True)
     
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    import os
+    
+    uvicorn.run(app, host=os.environ['HOST'], port=int(os.environ['PORT']))
