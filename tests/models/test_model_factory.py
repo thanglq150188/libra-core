@@ -58,13 +58,13 @@ if __name__ == "__main__":
     from libra.config import ChatGPTConfig
     
     model = ModelFactory.create(
-        model_label=ModelLabel.GPT_4o_mini,
+        model_label=ModelLabel.GPT_4o,
         model_config_dict=ChatGPTConfig(stream=True).__dict__,
     )
     
     # Prepare the input messages
     messages = [
-        {"role": "user", "content": "cuộc sống có giống cuộc đời không ?"}
+        {"role": "user", "content": "ngọt ngào đến mấy cũng tan thành mây"}
     ]
 
     # Run the model with the input messages
@@ -75,8 +75,10 @@ if __name__ == "__main__":
     
     if model.stream:
         for chunk in response: # type: ignore
-            print(chunk.choices[0].delta.content, end='')
+            content = chunk.choices[0].delta.content
+            if content:
+                print(content, end='')
     else:
         print(response.choices[0].message.content) # type: ignore
-        
+    
     print()

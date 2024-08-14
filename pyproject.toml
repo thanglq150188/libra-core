@@ -6,7 +6,7 @@ authors = ["thanglq150188 <thanglq150188@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.9"
 python-dotenv = "^1.0.1"
 pydantic = "^2.8.2"
 pydantic-settings = "^2.4.0"
@@ -33,3 +33,4 @@ ipykernel = "^6.29.5"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
