@@ -11,7 +11,7 @@ with open("data/company_profile.csv", "rb") as f:
     file.name = "company_profile.csv"
     json_file = read_file(file)
     for doc in json_file.docs:
-        doc_content = json.loads(doc['page_content'])        
+        doc_content = json.loads(doc['page_content'])    
         company_profiles.append({
             "Documents Topic": doc_content['Documents Topic'],
             "Document Content": doc_content['Document Content']
