@@ -1,7 +1,6 @@
 from typing import Any, Dict, List, Optional
 
 from libra.embeddings import BaseEmbedding, OpenAIEmbedding
-from libra.loaders import UnstructuredIO
 from libra.retrievers.base import BaseRetriever
 from libra.vectordb import (
     BaseVectorStorage,
@@ -56,16 +55,12 @@ class VectorRetriever(BaseRetriever):
             )
         )
         self.similarity_threshold = similarity_threshold
-        self.unstructured_modules: UnstructuredIO = UnstructuredIO()
 
     def process(
         self,
-        content_input_path: str,
-        chunk_type: str = "chunk_by_title",
-        **kwargs: Any,
+        texts: List[str]
     ) -> None:
-        r"""Processes content from a file or URL, divides it into chunks by
-        using `Unstructured IO`, and stores their embeddings in the specified
+        r"""Processes content from list of string, and stores their embeddings in the specified
         vector storage.
 
         Args:
@@ -75,15 +70,9 @@ class VectorRetriever(BaseRetriever):
                 "chunk_by_title".
             **kwargs (Any): Additional keyword arguments for content parsing.
         """
-        elements = self.unstructured_modules.parse_file_or_url(
-            content_input_path, **kwargs
-        )
-        chunks = self.unstructured_modules.chunk_elements(
-            chunk_type=chunk_type, elements=elements
-        )
         # Iterate to process and store embeddings, set batch of 50
-        for i in range(0, len(chunks), 50):
-            batch_chunks = chunks[i : i + 50]
+        for i in range(0, len(texts), 50):
+            batch_chunks = texts[i : i + 50]
             batch_vectors = self.embedding_model.embed_list(
                 objs=[str(chunk) for chunk in batch_chunks]
             )
@@ -92,16 +81,9 @@ class VectorRetriever(BaseRetriever):
             # Prepare the payload for each vector record, includes the content
             # path, chunk metadata, and chunk text
             for vector, chunk in zip(batch_vectors, batch_chunks):
-                content_path_info = {"content path": content_input_path}
-                chunk_metadata = {"metadata": chunk.metadata.to_dict()}
                 chunk_text = {"text": str(chunk)}
-                combined_dict = {
-                    **content_path_info,
-                    **chunk_metadata,
-                    **chunk_text,
-                }
                 records.append(
-                    VectorRecord(vector=vector, payload=combined_dict)
+                    VectorRecord(vector=vector, payload=chunk_text)
                 )
 
             self.storage.add(records=records)

@@ -1,5 +1,7 @@
-from typing import Any
+from __future__ import annotations
+
 import os
+from typing import Any
 
 from openai import NOT_GIVEN, NotGiven, OpenAI
 
@@ -22,7 +24,7 @@ class OpenAIEmbedding(BaseEmbedding):
     Raises:
         RuntimeError: If an unsupported model type is specified.
     """
-    
+
     def __init__(
         self,
         model_type: EmbeddingModelType = (
@@ -33,7 +35,6 @@ class OpenAIEmbedding(BaseEmbedding):
     ) -> None:
         if not model_type.is_openai:
             raise ValueError("Invalid OpenAI embedding model type.")
-        
         self.model_type = model_type
         if dimensions == NOT_GIVEN:
             self.output_dim = model_type.output_dim
@@ -42,8 +43,7 @@ class OpenAIEmbedding(BaseEmbedding):
             self.output_dim = dimensions
         self._api_key = api_key or os.environ.get("OPENAI_API_KEY")
         self.client = OpenAI(timeout=60, max_retries=3, api_key=self._api_key)
-        
-        
+
     def embed_list(
         self,
         objs: list[str],
@@ -67,8 +67,7 @@ class OpenAIEmbedding(BaseEmbedding):
             **kwargs,
         )
         return [data.embedding for data in response.data]
-    
-    
+
     def get_output_dim(self) -> int:
         r"""Returns the output dimension of the embeddings.
 
@@ -76,9 +75,14 @@ class OpenAIEmbedding(BaseEmbedding):
             int: The dimensionality of the embedding for the current model.
         """
         return self.output_dim
+
     
 
 if __name__ == '__main__':
+    from dotenv import load_dotenv
+    
+    load_dotenv()
+    
     openai_embedding = OpenAIEmbedding()
     print(openai_embedding.embed_list(["Cuộc sống không có bất cứ điều gì vui hết ?"]))
     print(openai_embedding.get_output_dim())
