@@ -10,7 +10,7 @@ from libra.vectordb import (
 )
 
 DEFAULT_TOP_K_RESULTS = 1
-DEFAULT_SIMILARITY_THRESHOLD = 0.75
+DEFAULT_SIMILARITY_THRESHOLD = 0.0
 
 
 class VectorRetriever(BaseRetriever):
@@ -60,6 +60,7 @@ class VectorRetriever(BaseRetriever):
         self,
         texts: List[str]
     ) -> None:
+        from tqdm import tqdm
         r"""Processes content from list of string, and stores their embeddings in the specified
         vector storage.
 
@@ -71,7 +72,7 @@ class VectorRetriever(BaseRetriever):
             **kwargs (Any): Additional keyword arguments for content parsing.
         """
         # Iterate to process and store embeddings, set batch of 50
-        for i in range(0, len(texts), 50):
+        for i in tqdm(range(0, len(texts), 50)):
             batch_chunks = texts[i : i + 50]
             batch_vectors = self.embedding_model.embed_list(
                 objs=[str(chunk) for chunk in batch_chunks]

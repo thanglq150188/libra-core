@@ -348,6 +348,9 @@ class MilvusStorage(BaseVectorStorage):
             List[VectorDBQueryResult]: A list of vectors retrieved from the
                 storage based on similarity to the query vector.
         """
+        # print(f'collection: {self.collection_name}')
+        # print(f'top_k: {query.top_k}')
+        # print(f'data: {query.query_vector}')
         search_result = self._client.search(
             collection_name=self.collection_name,
             data=[query.query_vector],
@@ -356,13 +359,16 @@ class MilvusStorage(BaseVectorStorage):
             **kwargs,
         )
         query_results = []
-        for point in search_result:
+        # print(f'number of results: {len(search_result)}')
+        # print(f'number of results 0: {len(search_result[0])}')
+        for point in search_result[0]:
+            # print(point)
             query_results.append(
                 VectorDBQueryResult.construct(
-                    similarity=(point[0]['distance']),
-                    id=str(point[0]['id']),
-                    payload=(point[0]['entity'].get('payload')),
-                    vector=point[0]['entity'].get('vector'),
+                    similarity=(point['distance']),
+                    id=str(point['id']),
+                    payload=(point['entity'].get('payload')),
+                    vector=point['entity'].get('vector'),
                 )
             )
 

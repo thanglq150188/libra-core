@@ -24,6 +24,7 @@ fitz = "^0.0.1.dev2"
 docx2txt = "^0.8"
 pymupdf = "^1.24.9"
 bs4 = "^0.0.2"
+sentence-transformers = "^3.0.1"
 
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^6.29.5"

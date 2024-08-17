@@ -1,0 +1,87 @@
+from libra.retrievers import VectorRetriever
+from libra.vectordb import MilvusStorage
+from libra.embeddings import OpenAIEmbedding
+
+
+data = [
+  "Cây bao báp có thể sống đến 5000 năm và thân cây có thể chứa đến 120.000 lít nước.",
+  "Tiếng Việt có 6 thanh điệu, giúp phân biệt ý nghĩa của các từ có cùng âm.",
+  "Trái đất quay quanh trục của nó với tốc độ khoảng 1600 km/giờ ở xích đạo.",
+  "DNA của con người chỉ khác DNA của tinh tinh khoảng 1.2%.",
+  "Hệ thống tàu điện ngầm Tokyo vận chuyển hơn 8 triệu hành khách mỗi ngày.",
+  "Sao Hỏa có hai mặt trăng: Phobos và Deimos.",
+  "Ngôn ngữ lập trình Python được đặt tên theo nhóm hài kịch Monty Python.",
+  "Cá voi xanh là động vật lớn nhất từng sống trên Trái đất, có thể nặng tới 200 tấn.",
+  "Vạn Lý Trường Thành có tổng chiều dài hơn 21.000 km.",
+  "Người Ai Cập cổ đại đã sử dụng bia như một loại thuốc kháng sinh.",
+  "Không khí nóng nở ra và nhẹ hơn không khí lạnh, đó là lý do tại sao khí cầu có thể bay.",
+  "Cà phê là mặt hàng giao dịch nhiều thứ hai trên thế giới, chỉ sau dầu mỏ.",
+  "Một con bạch tuộc có ba quả tim và máu màu xanh.",
+  "Tiếng sấm có thể nghe được từ khoảng cách 16 km.",
+  "Hoa hướng dương có khả năng hấp thụ chất phóng xạ từ đất.",
+  "Mật ong là thực phẩm duy nhất không bao giờ bị hỏng nếu được bảo quản đúng cách.",
+  "Bộ não con người tiêu thụ khoảng 20% năng lượng của cơ thể.",
+  "Nước biển đóng băng ở nhiệt độ thấp hơn nước ngọt, khoảng -2°C.",
+  "Cây tre có thể mọc cao tới 91 cm trong một ngày.",
+  "Một con mèo có thể nhảy cao gấp 5 lần chiều cao của nó.",
+  "Vân tay của con người bắt đầu hình thành từ khi còn là bào thai.",
+  "Tảo lục sản sinh ra khoảng 70% lượng oxy trong khí quyển Trái đất.",
+  "Một cây sồi trưởng thành có thể hấp thụ tới 190 lít nước mỗi ngày.",
+  "Nước chiếm khoảng 71%% bề mặt Trái đất, nhưng chỉ có 2.5% là nước ngọt.",
+  "Loài cá mập đã tồn tại trên Trái đất từ trước khi có cây cối.",
+  "Ngôn ngữ lập trình đầu tiên được phát minh bởi Ada Lovelace vào thế kỷ 19.",
+  "Một con ong mật phải bay khoảng 90.000 km để tạo ra 1 kg mật.",
+  "Trung bình, một người trưởng thành có khoảng 10 triệu tế bào khứu giác.",
+  "Vỏ Trái đất mỏng hơn so với vỏ của một quả trứng nếu so sánh tỷ lệ.",
+  "Nếu Mặt Trời là kích thước của một tế bào bạch cầu, Dải Ngân hà sẽ rộng bằng lục địa Bắc Mỹ.",
+  "Trong một năm, tim của bạn đập khoảng 35 triệu lần.",
+  "Nước đá nóng thực sự tồn tại và có thể đạt nhiệt độ lên tới 2000°C.",
+  "Bộ não của một con ruồi chỉ chứa khoảng 100.000 tế bào thần kinh.",
+  "Một chiếc lá rơi mất trung bình 7 đến 10 ngày để phân hủy hoàn toàn.",
+  "Tia chớp có thể làm nóng không khí xung quanh nó lên tới 30.000°C.",
+  "Cá heo có thể nhận ra bản thân mình trong gương.",
+  "Các nhà khoa học ước tính rằng có khoảng 8.7 triệu loài sinh vật trên Trái đất.",
+  "Một người trưởng thành trung bình hít thở khoảng 23.000 lần mỗi ngày.",
+  "Nếu bạn la hét liên tục trong 8 năm, 7 tháng và 6 ngày, bạn sẽ tạo ra đủ năng lượng âm thanh để đun sôi một tách cà phê.",
+  "Có nhiều vi sinh vật sống trong miệng của bạn hơn số người trên Trái đất.",
+  "Một con chim ruồi có thể đập cánh tới 200 lần mỗi giây.",
+  "Nước chiếm khoảng 60% trọng lượng cơ thể người trưởng thành.",
+  "Một cây sồi trưởng thành có thể sản xuất tới 10 triệu quả sồi trong đời.",
+  "Trái tim của một con tôm nằm ở đầu của nó.",
+  "Một con kiến có thể nâng vật nặng gấp 50 lần trọng lượng cơ thể của nó.",
+  "Vũ trụ mở rộng với tốc độ nhanh hơn tốc độ ánh sáng.",
+  "Cá mập không có xương, bộ xương của chúng được làm hoàn toàn bằng sụn.",
+  "Mỗi ngày, Trái đất được bổ sung thêm khoảng 100 tấn bụi vũ trụ.",
+  "Nếu bạn có thể lái xe lên không gian với tốc độ 120km/h, bạn sẽ mất khoảng 6 tháng để đến Mặt trăng.",
+  "Một con hươu cao cổ có thể làm sạch tai của nó bằng lưỡi dài 53cm của mình.",
+  "Não của một con người trưởng thành chứa khoảng 86 tỷ tế bào thần kinh.",
+  "Nếu bạn đặt Saturn vào một đại dương đủ lớn, nó sẽ nổi vì mật độ của nó nhỏ hơn nước.",
+  "Cơ thể con người chứa đủ carbon để tạo ra khoảng 900 cây bút chì.",
+  "Tiếng kêu của một con vịt không tạo ra tiếng vang, và không ai biết tại sao.",
+  "Một con bướm có thể nhìn thấy màu sắc mà mắt người không thể nhìn thấy, bao gồm cả tia cực tím.",
+  "Có nhiều cách để xáo trộn một bộ bài 52 lá hơn số nguyên tử trong vũ trụ.",
+  "Một con cá voi xanh có thể tạo ra âm thanh lớn hơn tiếng phản lực cất cánh.",
+  "Nếu bạn mở mắt trong nước biển, bạn vẫn có thể thấy mọi thứ mờ mờ vì nước biển có chỉ số khúc xạ gần giống với mắt người.",
+  "Trái đất thực sự có hình dạng như một quả bí ngô hơi dẹt, không phải hình cầu hoàn hảo.",
+  "Một con ốc sên có thể ngủ đông trong ba năm nếu điều kiện môi trường không thuận lợi.",
+  "Nếu bạn có thể gập một tờ giấy 42 lần, nó sẽ dày đến mức có thể chạm tới mặt trăng.",
+  "Cơ thể con người phát ra một lượng nhỏ ánh sáng, nhưng quá yếu để mắt thường có thể nhìn thấy.",
+  "Một số loài cây có khả năng giao tiếp với nhau thông qua hệ thống rễ dưới lòng đất.",
+  "Nếu bạn lấy tất cả các mạch máu trong cơ thể và nối chúng lại với nhau, chúng sẽ dài khoảng 96.000 km.",
+  "Một con mực ống khổng lồ có mắt to bằng quả bóng bàn.",
+  "Mỗi ngày, cơ thể bạn sản xuất khoảng 300 tỷ tế bào máu mới.",
+  "Nếu bạn phát âm thanh trong không gian, không ai có thể nghe thấy vì âm thanh không thể truyền trong chân không.",
+  "Một con cá voi xám có thể sống tới 200 năm, làm cho nó trở thành một trong những loài động vật có vú sống lâu nhất trên Trái đất.",
+  "Mỗi giây, có khoảng 100 tia sét đánh xuống Trái đất.",
+  "Nếu bạn có thể nén tất cả không gian trống trong các nguyên tử tạo nên cơ thể con người, bạn sẽ chỉ còn kích thước bằng một hạt bụi."
+]
+
+import os
+
+embedding_instance = OpenAIEmbedding()
+
+storage_instance = MilvusStorage(
+    vector_dim=embedding_instance.output_dim,
+    url_and_api_key=(os.environ['MILVUS_URI'], "123123"),
+    collection_name="random_sentences"
+)

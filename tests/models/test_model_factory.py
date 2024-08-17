@@ -59,17 +59,17 @@ if __name__ == "__main__":
     
     model = ModelFactory.create(
         model_label=ModelLabel.GPT_4o,
-        model_config_dict=ChatGPTConfig(stream=True).__dict__,
+        model_config_dict=ChatGPTConfig(stream=True, temperature=0.0).__dict__,
     )
     
     # Prepare the input messages
     messages = [
-        {"role": "user", "content": "ngọt ngào đến mấy cũng tan thành mây"}
+        {"role": "user", "content": "viết giùm tôi một đoạn code game ninja báo thù bằng python đi"}
     ]
 
     # Run the model with the input messages
     # response = model.stream(messages=messages, tools=tools)
-    response = model.run(messages=messages)
+    response = model.run(messages=messages) # type: ignore
     
     import json
     

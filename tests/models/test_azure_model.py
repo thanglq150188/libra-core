@@ -15,7 +15,7 @@ if __name__ == "__main__":
     ]
 
     # Run the model with the input messages
-    response = model.run(messages=messages)
+    response = model.run(messages=messages) # type: ignore
     
     import json
     
