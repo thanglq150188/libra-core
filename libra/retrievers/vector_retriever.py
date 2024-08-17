@@ -58,7 +58,8 @@ class VectorRetriever(BaseRetriever):
 
     def process(
         self,
-        texts: List[str]
+        data: List[Dict[str, str]],
+        batch_size: int = 10
     ) -> None:
         from tqdm import tqdm
         r"""Processes content from list of string, and stores their embeddings in the specified
@@ -72,19 +73,24 @@ class VectorRetriever(BaseRetriever):
             **kwargs (Any): Additional keyword arguments for content parsing.
         """
         # Iterate to process and store embeddings, set batch of 50
-        for i in tqdm(range(0, len(texts), 50)):
-            batch_chunks = texts[i : i + 50]
+        for i in tqdm(range(0, len(data), batch_size)):
+            batch_chunks = data[i : i + batch_size]
             batch_vectors = self.embedding_model.embed_list(
-                objs=[str(chunk) for chunk in batch_chunks]
+                objs=[chunk['embed'] for chunk in batch_chunks]
             )
 
             records = []
             # Prepare the payload for each vector record, includes the content
             # path, chunk metadata, and chunk text
             for vector, chunk in zip(batch_vectors, batch_chunks):
-                chunk_text = {"text": str(chunk)}
+                payload = {
+                    "metadata": {key: value for key, value in chunk.items() if key != 'content'},
+                    "text": chunk['content']
+                }
+                # print(chunk_text)
+                # print(vector)
                 records.append(
-                    VectorRecord(vector=vector, payload=chunk_text)
+                    VectorRecord(vector=vector, payload=payload)
                 )
 
             self.storage.add(records=records)
