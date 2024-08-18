@@ -33,10 +33,10 @@ def mb_information_retrieval(
     r"""Retrieves MB Bank information based on a Vietnamese query.
 
     This function searches a local vector storage for information about MB Bank,
-    including its history, products, services, achievements, and related issues.
+    including its history, products, services, achievements, and related issues.        
 
     Args:
-        query (str): A Vietnamese language query about MB Bank.
+        query (str): A Vietnamese language query about MB Bank. You should generate this query as good as you can based on the conversation with user.
 
     Returns:
         str: Retrieved information formatted as a string, including the original
@@ -84,6 +84,8 @@ def job_retrieval(
     This function should be used when:
     - The user asks for information about job opportunities at MB Bank.
     - The user describes their skills and wants to know if there are any suitable jobs at MB Bank.
+    
+    If any required parameter is not provided, ask the user for all missing information until you have complete details.
 
     Parameters:
         workplace (str): The desired workplace (city or province) at MB Bank (e.g., Nghệ An, Hà Nội, Hồ Chí Minh).
