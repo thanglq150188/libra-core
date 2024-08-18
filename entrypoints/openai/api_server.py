@@ -8,6 +8,7 @@ from libra.types.enums import ModelLabel
 from typing import Dict, Any
 from libra.config import ChatGPTConfig
 from libra.functions.retrieval_functions import job_retriever
+from tasks.chat_agent import ChatAgent
 
 
 app = FastAPI()
@@ -21,22 +22,17 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
+chat_agent = ChatAgent()
+
+
 async def stream_response(data: Dict[str, Any]):
-    messages = data.get("messages", [])
-    stream = data.get("stream", True)
-    
-    # Create model with dynamic parameters
-    model = ModelFactory.create(
-        model_label=ModelLabel.GPT_4o,
-        model_config_dict=ChatGPTConfig(stream=stream, temperature=0.0).__dict__,
+    messages = data.get("messages", [])    
+    response = chat_agent.step(
+        messages=messages
     )
     
-    response = model.run(messages=messages)
-    if model.stream:
-        for chunk in response: # type: ignore                        
-            yield f"data: {chunk.json()}\n\n"
-    else:
-        yield f"data: {response.json()}\n\n" # type: ignore
+    for chunk in response:
+        yield f"data: {chunk.json()}\n\n"
     
     yield "data: [DONE]\n\n"
         

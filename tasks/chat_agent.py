@@ -12,6 +12,7 @@ from libra.functions import OpenAIFunction
 from libra.config import ChatGPTConfig
 from libra.prompts import SYSTEM_INIT_PROMPT
 from libra.messages import OpenAIMessage
+import json
 
 
 class ChatAgent:
@@ -52,23 +53,66 @@ class ChatAgent:
         ]
         prompts.extend(messages)
         
-        response = self.model.run(messages=messages)
+        response = self.model.run(messages=prompts)
         
         # parsing to see if there is a tool call
         first_chunk = response.__next__()
         tool_call_first_chunk = first_chunk.choices[0].delta.tool_calls
         if tool_call_first_chunk is not None:
             # tool call not None, there is a tool use case
-            tool_id = tool_call_first_chunk.id
-            tool_name = tool_call_first_chunk.function.name
-            tool_arguments = tool_call_first_chunk.function.arguments
+            tool_id = tool_call_first_chunk[0].id
+            tool_name = tool_call_first_chunk[0].function.name
+            tool_arguments = tool_call_first_chunk[0].function.arguments
+            for chunk in response:                
+                finish_reason = chunk.choices[0].finish_reason
+                if finish_reason is None:
+                    tool_call_chunk = chunk.choices[0].delta.tool_calls[0] 
+                    tool_arguments += tool_call_chunk.function.arguments
+            tool_arguments = json.loads(tool_arguments)
+            result = globals()[tool_name](**tool_arguments) # type: ignore
+            tool_call_msg = {
+                "role": "assistant",
+                "tool_calls": [
+                    {
+                        "id": tool_id,
+                        "type": "function",
+                        "function": {
+                            "name": tool_name,
+                            "arguments": str(tool_arguments)
+                        }
+                    }
+                ],    
+            }
+            
+            print(result)
+            # Append the tool result to get the real answer
+            prompts.extend([
+                tool_call_msg,
+                {"role":"tool", "tool_call_id": tool_id, "name": tool_name, "content":result} # type: ignore
+            ])
+            response = self.model.run(
+                messages=prompts
+            )
+            
             for chunk in response:
-                tool_call_chunk = chunk.choices[0].delta.tool_calls[0] 
-                tool_arguments += tool_call_chunk.function.arguments
+                chunk_text = chunk.choices[0].delta.content
+                if chunk_text is not None:
+                    yield chunk
         else:
             # not tool use, just return normal chunk
-            yield chunk.json() # type: ignore
+            for chunk in response:
+                chunk_text = chunk.choices[0].delta.content
+                if chunk_text is not None:
+                    yield chunk
+                    
         
 if __name__=="__main__":
     chat_agent = ChatAgent()
-    
+    response = chat_agent.step(
+        messages=[
+            {"role": "user", "content": "có job IT nào ngon ngon không ?"}
+        ]
+    )
+    for chunk in response:
+        print(chunk)
+        print()
