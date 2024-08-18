@@ -33,11 +33,14 @@ async def stream_response(data: Dict[str, Any]):
     
     response = model.run(messages=messages)
     if model.stream:
-        for chunk in response: # type: ignore
+        for chunk in response: # type: ignore                        
             yield f"data: {chunk.json()}\n\n"
     else:
         yield f"data: {response.json()}\n\n" # type: ignore
-
+    
+    yield "data: [DONE]\n\n"
+        
+        
 @app.post("/chat/completions")
 async def stream_model_response(request: Request):
     data = await request.json()
