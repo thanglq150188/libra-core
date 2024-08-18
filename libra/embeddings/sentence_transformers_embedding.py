@@ -32,7 +32,7 @@ class SentenceTransformerEncoder(BaseEmbedding):
         from sentence_transformers import SentenceTransformer
 
         self.model = SentenceTransformer(model_name, **kwargs)
-
+        
     def embed_list(
         self,
         objs: list[str],
