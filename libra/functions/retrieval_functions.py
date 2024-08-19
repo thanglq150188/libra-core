@@ -2,7 +2,7 @@ from typing import List, Union, Dict
 
 from libra.functions import OpenAIFunction
 from libra.retrievers import VectorRetriever
-from libra.vectordb import MilvusStorage
+from libra.vectordb import MilvusStorage, QdrantStorage
 from libra.embeddings import SentenceTransformerEncoder, OpenAIEmbedding
 import os
 
@@ -15,9 +15,16 @@ print('loading embedding model...', end='')
 embedding_instance = SentenceTransformerEncoder()
 print('finish!')
 
-mb_info_storage_instance = MilvusStorage(
+from qdrant_client import QdrantClient
+
+client = QdrantClient(
+    path='./libra_qdrant.db'
+)
+
+mb_info_storage_instance = QdrantStorage(
+    client=client,
     vector_dim=embedding_instance.get_output_dim(),
-    url_and_api_key=(os.environ['MILVUS_URI'], "123123"),
+    # url=os.environ['MILVUS_URI'],
     collection_name="MBInfo"
 )
 
@@ -61,9 +68,10 @@ def mb_information_retrieval(
     return text_info
 
 
-job_storage_instance = MilvusStorage(
+job_storage_instance = QdrantStorage(
+    client=client,
     vector_dim=embedding_instance.get_output_dim(),
-    url_and_api_key=(os.environ['MILVUS_URI'], "123123"),
+    # url=os.environ['MILVUS_URI'],
     collection_name="jobs"
 )
 

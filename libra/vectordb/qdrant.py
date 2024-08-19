@@ -23,6 +23,7 @@ from libra.vectordb import (
     VectorRecord,
 )
 from libra.types import VectorDistance
+from qdrant_client import QdrantClient
 
 
 _qdrant_local_client_map: Dict[str, Tuple[Any, int]] = {}
@@ -67,17 +68,17 @@ class QdrantStorage(BaseVectorStorage):
         self,
         vector_dim: int,
         collection_name: Optional[str] = None,
-        url_and_api_key: Optional[Tuple[str, str]] = None,
-        path: Optional[str] = None,
+        client: QdrantClient = None,
+        path: Optional[str] = "./libra_qdrant.db",
         distance: VectorDistance = VectorDistance.COSINE,
         delete_collection_on_del: bool = False,
         **kwargs: Any,
     ) -> None:
-        from qdrant_client import QdrantClient
 
-        self._client: QdrantClient
+
+        self._client: QdrantClient = client
         self._local_path: Optional[str] = None
-        self._create_client(url_and_api_key, path, **kwargs)
+        # self._create_client(path, **kwargs)
 
         self.vector_dim = vector_dim
         self.distance = distance
@@ -111,16 +112,15 @@ class QdrantStorage(BaseVectorStorage):
 
     def _create_client(
         self,
-        url_and_api_key: Optional[Tuple[str, str]],
+        # url: str,
         path: Optional[str],
         **kwargs: Any,
     ) -> None:
         from qdrant_client import QdrantClient
 
-        if url_and_api_key is not None:
+        if path is not None:
             self._client = QdrantClient(
-                url=url_and_api_key[0],
-                api_key=url_and_api_key[1],
+                path = path,
                 **kwargs,
             )
         elif path is not None:

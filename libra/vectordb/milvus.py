@@ -54,14 +54,14 @@ class MilvusStorage(BaseVectorStorage):
     def __init__(
         self,
         vector_dim: int,
-        url_and_api_key: Tuple[str, str],
+        url: str,
         collection_name: Optional[str] = None,
         **kwargs: Any,
     ) -> None:
         from pymilvus import MilvusClient
 
         self._client: MilvusClient
-        self._create_client(url_and_api_key, **kwargs)
+        self._create_client(url, **kwargs)
         self.vector_dim = vector_dim
         self.collection_name = (
             collection_name or self._generate_collection_name()
@@ -70,7 +70,7 @@ class MilvusStorage(BaseVectorStorage):
 
     def _create_client(
         self,
-        url_and_api_key: Tuple[str, str],
+        url: str,
         **kwargs: Any,
     ) -> None:
         r"""Initializes the Milvus client with the provided connection details.
@@ -83,8 +83,7 @@ class MilvusStorage(BaseVectorStorage):
         from pymilvus import MilvusClient
 
         self._client = MilvusClient(
-            uri=url_and_api_key[0],
-            token=url_and_api_key[1],
+            uri=url,
             **kwargs,
         )
 
