@@ -110,7 +110,7 @@ if __name__=="__main__":
     chat_agent = ChatAgent()
     response = chat_agent.step(
         messages=[
-            {"role": "user", "content": "có job IT nào ngon ngon không ?"}
+            {"role": "user", "content": "xin chào"}
         ]
     )
     for chunk in response:

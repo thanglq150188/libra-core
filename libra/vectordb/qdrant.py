@@ -67,8 +67,8 @@ class QdrantStorage(BaseVectorStorage):
     def __init__(
         self,
         vector_dim: int,
+        client: QdrantClient,
         collection_name: Optional[str] = None,
-        client: QdrantClient = None,
         path: Optional[str] = "./libra_qdrant.db",
         distance: VectorDistance = VectorDistance.COSINE,
         delete_collection_on_del: bool = False,
