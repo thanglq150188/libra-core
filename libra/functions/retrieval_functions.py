@@ -138,11 +138,23 @@ def job_retrieval(
     return text_info
 
 
+def mb_network_retrieval():
+    """Retrieve information about MB Bank branches and transaction offices.
+    This function should be used when:
+        - The user asks for information about MB Bank's branches or transaction offices.
+        - The user wants to know the number of branches or transaction offices in a specific area.
+        - The user requests details about a particular branch or transaction office.
+    """
+    from data.mb_network import mb_network_address
+    return mb_network_address
+
+
 RETRIEVAL_FUNCS: List[OpenAIFunction] = [
     OpenAIFunction(func)
     for func in [
         mb_information_retrieval,
-        job_retrieval
+        job_retrieval,
+        mb_network_retrieval
     ]
 ]
 

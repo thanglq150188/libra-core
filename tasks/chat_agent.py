@@ -5,7 +5,8 @@ from openai import Stream
 from libra.functions.retrieval_functions import (
     RETRIEVAL_FUNCS,
     mb_information_retrieval,
-    job_retrieval
+    job_retrieval,
+    mb_network_retrieval
 )
 
 from libra.functions import OpenAIFunction
@@ -95,24 +96,26 @@ class ChatAgent:
             )
             
             for chunk in response:
-                chunk_text = chunk.choices[0].delta.content
-                if chunk_text is not None:
-                    yield chunk
+                if len(chunk.choices) > 0:
+                    chunk_text = chunk.choices[0].delta.content
+                    if chunk_text is not None:
+                        yield chunk
         else:
             # not tool use, just return normal chunk
             for chunk in response:
-                chunk_text = chunk.choices[0].delta.content
-                if chunk_text is not None:
-                    yield chunk
+                if len(chunk.choices) > 0:
+                    chunk_text = chunk.choices[0].delta.content
+                    if chunk_text is not None:
+                        yield chunk
                     
         
 if __name__=="__main__":
     chat_agent = ChatAgent()
     response = chat_agent.step(
         messages=[
-            {"role": "user", "content": "xin chào"}
+            {"role": "user", "content": "bạn có thể trợ giúp mình những gì nhỉ ?"}
         ]
     )
     for chunk in response:
-        print(chunk)
-        print()
+        print(chunk.choices[0].delta.content, end='')
+    print()
