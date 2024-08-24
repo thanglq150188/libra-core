@@ -46,10 +46,10 @@ class ChatAgent:
         
     def step(
         self, 
-        messages: List[OpenAIMessage]
+        messages: List[OpenAIMessage] # type: ignore
     ): # type: ignore
         
-        prompts: List[OpenAIMessage] = [
+        prompts: List[OpenAIMessage] = [ # type: ignore
             {"role": "system", "content": self.system_message}
         ]
         prompts.extend(messages)
@@ -85,7 +85,7 @@ class ChatAgent:
                 ],    
             }
             
-            print(result)
+            # print(result)
             # Append the tool result to get the real answer
             prompts.extend([
                 tool_call_msg,
@@ -107,15 +107,3 @@ class ChatAgent:
                     chunk_text = chunk.choices[0].delta.content
                     if chunk_text is not None:
                         yield chunk
-                    
-        
-if __name__=="__main__":
-    chat_agent = ChatAgent()
-    response = chat_agent.step(
-        messages=[
-            {"role": "user", "content": "bạn có thể trợ giúp mình những gì nhỉ ?"}
-        ]
-    )
-    for chunk in response:
-        print(chunk.choices[0].delta.content, end='')
-    print()
