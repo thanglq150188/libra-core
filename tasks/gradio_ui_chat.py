@@ -22,7 +22,7 @@ def chatbot(message, history):
 
 iface = gr.ChatInterface(
     chatbot,
-    chatbot=gr.Chatbot(height=300),
+    chatbot=gr.Chatbot(height="70vh"),
     textbox=gr.Textbox(placeholder="Ask something about MB Bank...", container=False, scale=7),
     title="MB Bank ChatBot",
     description="Ask questions about MB Bank and get answers!",

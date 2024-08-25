@@ -39,8 +39,8 @@ def mb_information_retrieval(
 ) -> str:
     r"""Retrieves MB Bank information based on a Vietnamese query.
 
-    This function searches a local vector storage for information about MB Bank,
-    including its history, products, services, achievements, and related issues.        
+    Use when user ask anything about MB (MB Bank) such as: MB Bank's history,
+    MB Bank's products and services, MB Bank's achievement, any problem relating to MB.        
 
     Args:
         query (str): A Vietnamese language query about MB Bank. You should generate this query as good as you can based on the conversation with user.
@@ -83,9 +83,9 @@ job_retriever = VectorRetriever(
 def job_retrieval(
     workplace: str,
     industry: str,
-    welfare: str,
-    min_salary: int,
-    max_salary: int,
+    min_salary: int = 10000000,
+    max_salary: int = 35000000,
+    welfare: str = "",
 ) -> str:
     r"""Retrieve job opportunities at MB Bank based on user preferences.
 
@@ -93,7 +93,11 @@ def job_retrieval(
     - The user asks for information about job opportunities at MB Bank.
     - The user describes their skills and wants to know if there are any suitable jobs at MB Bank.
     
-    If any required parameter is not provided, ask the user for all missing information until you have complete details.
+    If no parameter is provided, ask the user for one of the follow missing information (randomly):
+    - workplace
+    - industry
+    - salary
+    If one of them is available, just trigger the tool call
 
     Parameters:
         workplace (str): The desired workplace (city or province) at MB Bank (e.g., Nghệ An, Hà Nội, Hồ Chí Minh).
@@ -101,7 +105,7 @@ def job_retrieval(
             - "Dịch vụ khách hàng"
             - "Ngân hàng"
             - "Tài chính / Đầu tư"
-            - "CNTT - Phần mềm"
+            - "CNTT - Phần mềm" (IT, AI...)
             These can be combined with 'và' (and) for more specific results.
         welfare (str): Desired welfare benefits (e.g., salary, bonus, insurance).
         min_salary (int): Minimum desired salary at MB Bank.
