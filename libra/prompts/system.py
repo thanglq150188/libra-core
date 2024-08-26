@@ -103,9 +103,9 @@ MAIN SYSTEM PROMPT
 Please answer in the same language as the question and use the following format:
 
 ```
-Thought: The current language of the user is: (user's language). I need to use a tool to help me answer the question.
+Thought: The current language of the user is: (user's language). I need to use a tool to help me answer the question. Then I need to extract the input to chosen tool.
 Action: tool name (one of {tool_names}) if using a tool.
-Action Input: the input to the tool, in a JSON format representing the kwargs (e.g. {{"input": "hello world", "num_beams": 5}})
+Action Input: the input to the tool, in a JSON format representing the kwargs (e.g. {{"input": "hello world", "num_beams": 5}}). If it is not provided, don't try to make it up.
 ```
 
 Please ALWAYS start with a Thought.
@@ -136,4 +136,10 @@ Answer: [your answer here (In the same language as the user's question)]
 ## Current Conversation
 
 Below is the current conversation consisting of interleaving human and assistant messages.
+"""
+
+TOOL_FORMAT_PROMPT = """
+> Tool name: {tool_name}
+Tool Description: {tool_description}
+Tool Args: {tool_argument}
 """

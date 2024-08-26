@@ -18,7 +18,7 @@ print('finish!')
 from qdrant_client import QdrantClient
 
 client = QdrantClient(
-    path='../libra_qdrant.db'
+    path='./libra_qdrant.db'
 )
 
 mb_info_storage_instance = QdrantStorage(
@@ -64,11 +64,10 @@ def mb_information_retrieval(
         info['text'] for info in results if 'text' in info
     )
     
-    # text_info = (
-    #     f"câu hỏi:\n{query}\n"
-    #     f"Tài liệu cung cấp:\n{retrieved_info_text}"
-    # )
-    return retrieved_info_text
+    return f"""
+tài liệu được tìm thấy: {retrieved_info_text}
+Lưu ý: Nếu tài liệu không có thông tin cần thiết, cứ trả lời là bạn không có đủ thông tin nên không thể giải đáp.
+"""
 
 
 job_storage_instance = QdrantStorage(

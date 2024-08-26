@@ -1,5 +1,5 @@
 import gradio as gr
-from tasks.chat_agent import ChatAgent
+from libra.agents.chat_agent import ChatAgent
 
 chat_agent = ChatAgent()
 
