@@ -2,7 +2,7 @@ from libra.models import ModelFactory, ModelBackend
 from libra.types import ModelLabel, ChatCompletion, ChatCompletionChunk
 from typing import List, Optional, Dict, Union
 from libra.functions.retrieval_functions import (
-    RETRIEVAL_FUNCS,
+    USAGE_FUNCS,
     mb_information_retrieval,
     job_retrieval,
     mb_network_retrieval
@@ -32,7 +32,7 @@ class ChatAgent:
             else ModelFactory.create(
                 model_label=ModelLabel.GPT_4o,
                 model_config_dict=ChatGPTConfig(
-                    tools=RETRIEVAL_FUNCS,
+                    tools=USAGE_FUNCS,
                     stream=True,
                     temperature=0.0
                 ).__dict__
@@ -42,7 +42,7 @@ class ChatAgent:
         self.tools = (
             tools
             if tools is not None
-            else RETRIEVAL_FUNCS
+            else USAGE_FUNCS
         )
         
     def step(

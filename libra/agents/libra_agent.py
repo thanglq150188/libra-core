@@ -1,7 +1,7 @@
 from libra.models import ModelFactory, ModelBackend
 from libra.types import ModelLabel
 from typing import List, Optional, Dict, Tuple
-from libra.functions.retrieval_functions import RETRIEVAL_FUNCS
+from libra.functions.retrieval_functions import USAGE_FUNCS
 from colorama import Fore
 from libra.functions import OpenAIFunction
 from libra.config import ChatGPTConfig
@@ -65,7 +65,7 @@ class LibraAgent:
         self.tools = (
             tools
             if tools is not None
-            else RETRIEVAL_FUNCS
+            else USAGE_FUNCS
         )
         
         self.tool_dict = {
@@ -93,7 +93,7 @@ class LibraAgent:
         last_messages = messages[-limit:] if len(messages) > limit else messages
         prompts.extend(last_messages)
         
-        logs.print_color(last_messages[-1], Fore.YELLOW)
+        logs.print_color(last_messages[-1], Fore.YELLOW) # type: ignore
         
         response = self.model.run(messages=prompts)
         
@@ -129,7 +129,8 @@ class LibraAgent:
             )
             
             for chunk in generator:
-                yield chunk # type: ignore                           
+                if st.is_valid(chunk):
+                    yield chunk # type: ignore                           
         
 
 if __name__ == "__main__":
@@ -138,7 +139,7 @@ if __name__ == "__main__":
     agent = LibraAgent()
     
     response = agent.step(messages=[
-        {"role": "user", "content": "MB có bao nhiêu công ty con?"},
+        {"role": "user", "content": "bạn tên là gì ? và bạn có biết mình tên là gì không ?"},
     ])    
       
     for chunk in response:        

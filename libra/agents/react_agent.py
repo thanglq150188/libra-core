@@ -2,7 +2,7 @@ from libra.models import ModelFactory, ModelBackend
 from libra.types import ModelLabel
 from typing import List, Optional, Dict, Union
 from libra.functions.retrieval_functions import (
-    RETRIEVAL_FUNCS
+    USAGE_FUNCS
 )
 
 from libra.functions import OpenAIFunction
@@ -156,7 +156,7 @@ class ReactAgent:
         self.tools = (
             tools
             if tools is not None
-            else RETRIEVAL_FUNCS
+            else USAGE_FUNCS
         )
         
         self.tool_dict = {

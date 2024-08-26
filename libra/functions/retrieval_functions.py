@@ -156,18 +156,230 @@ def mb_network_retrieval():
     return mb_network_address
 
 
-RETRIEVAL_FUNCS: List[OpenAIFunction] = [
+workplace_values = [
+    'Khánh Hòa', 'Hà Nam', 'Đà Nẵng', 'Đắk Lắk', 'Phú Yên', 'Nam Định',
+    'Đắk Nông', 'Bình Định', 'Hải Phòng', 'Hà Nội', 'Hồ Chí Minh',
+    'Bình Thuận', 'Cần Thơ', 'Sóc Trăng', 'Long An', 'Cà Mau',
+    'Tiền Giang', 'Tây Ninh', 'Bình Dương', 'Kiên Giang', 'Đồng Nai',
+    'Lâm Đồng', 'Đồng Tháp', 'Bình Phước', 'Bến Tre', 'Trà Vinh',
+    'Ninh Bình', 'Hà Tĩnh', 'Thanh Hóa', 'Nghệ An', 'Yên Bái',
+    'Vĩnh Phúc', 'Phú Thọ', 'Tuyên Quang', 'Bắc Ninh', 'Thái Nguyên',
+    'Sơn La', 'Lào Cai', 'Lạng Sơn', 'Hưng Yên', 'Hòa Bình',
+    'Hải Dương', 'Điện Biên', 'Bắc Giang', 'An Giang', 'Bạc Liêu',
+    'Hậu Giang', 'Vĩnh Long', 'Bà Rịa - Vũng Tàu', 'Thừa Thiên Huế',
+    'Quảng Trị', 'Quảng Ninh', 'Thái Bình', 'Gia Lai', 'Quảng Ngãi',
+    'Quảng Nam', 'Quảng Bình', 'Ninh Thuận'
+]
+
+job_industry_values = [
+    'Bán hàng / Kinh doanh',
+    'Bảo trì / Sửa chữa',
+    'Bộ phận pháp lý',
+    'CNTT - Phần cứng / Mạng',
+    'CNTT - Phần mềm',
+    'Dịch vụ khách hàng',
+    'Hành chính / Thư ký',
+    'Kế toán / Kiểm toán',
+    'Luật / Pháp lý',
+    'Mỹ thuật / Nghệ thuật / Thiết kế',
+    'Ngân hàng',
+    'Nhân sự',
+    'Quản lý điều hành',
+    'Quảng cáo / Đối ngoại / Truyền Thông',
+    'Tài chính / Đầu tư',
+    'Tài chính kế hoạch',
+    'Tư vấn'
+]
+
+job_title_values = [
+    'Chuyên viên Khách hàng Cá nhân',
+    'Chuyên viên Tập sự Khách hàng Cá nhân',
+    'Chuyên viên Tập sự Khách hàng Doanh nghiệp',
+    'Chuyên viên Khách hàng Doanh nghiệp',
+    'Chuyên gia Phát triển dịch vụ (API)',
+    'Chuyên viên Phát triển dịch vụ thẻ Khách hàng doanh nghiệp (BA thẻ)',
+    'Cộng tác viên Tuyển dụng', 'Chuyên viên UB',
+    'Chuyên viên Vận hành hệ thống', 'Data Platform Engineer',
+    'Quality Assurance (QA)', 'UI UX Designer',
+    'Chuyên viên Thúc đẩy bán Sản phẩm Tín dụng', 'Giao dịch viên',
+    'Kiểm soát viên', 'Kiểm toán viên (mảng Mô hình, Dữ liệu)',
+    'Phó phòng Khách hàng Cá nhân', 'Trưởng phòng Khách hàng Cá nhân',
+    'Chuyên viên và Chuyên viên cao cấp Quản trị rủi ro mô hình',
+    'Chuyên viên và Chuyên viên cao cấp Kiểm định Mô hình rủi ro',
+    'Chuyên viên cao cấp Phân tích nghiệp vụ',
+    'Chuyên viên và Chuyên viên cao cấp Xây dựng Mô hình rủi ro',
+    'Red Team', 'Pentester', 'Chuyên viên kiến trúc an toàn thông tin',
+    'Chuyên viên Giải pháp nền tảng',
+    'Chuyên viên Phát triển nguồn lực',
+    'Trưởng phòng Khách hàng Doanh nghiệp',
+    'Nhân viên hành chính (NS)', 'Kiểm ngân', 'Giám đốc Dịch vụ',
+    'Chuyên viên Tài trợ thương mại',
+    'Chuyên viên Phát triển Kinh doanh Bancassurance',
+    'Chuyên viên và Chuyên viên cao cấp Quản trị rủi ro tích hợp',
+    'Chuyên viên Hỗ trợ', 'Giám đốc Quan hệ Khách hàng',
+    'Chuyên viên Dịch vụ Tài trợ Thương mại',
+    'Chuyên viên Kiểm thử tự động (Automation Tester)',
+    'Chuyên viên Khách hàng lớn', 'Network Administrator',
+    'Chuyên viên và Chuyên viên cao cấp Phát triển thương hiệu',
+    'Chuyên viên và Chuyên viên cao cấp Quản trị nợ',
+    'Chuyên viên Quản lý ứng dụng', 'AI Engineer', 'Kỹ sư Devsecops',
+    'Chuyên viên cao cấp và Chuyên gia Tư vấn pháp chế',
+    'Phó Giám đốc Chi nhánh (SME)', 'Chuyên viên Tập sự UB',
+    'Chuyên viên Khách hàng Cá nhân (aRM)',
+    'Chuyên viên Cao cấp và Chuyên gia Chính sách và chất lượng dữ liệu',
+    'Data Architect', 'Data Engineer', 'Business Analyst',
+    'Chuyên viên Cao cấp và Chuyên gia Quản lý cấu trúc dữ liệu',
+    'Tester',
+    'Chuyên viên và Chuyên viên Cao cấp Mô hình kinh doanh (Data scientist)',
+    'Chuyên viên và Chuyên viên Cao cấp Công nghệ mô hình (AI/ML Ops)',
+    'Chuyên viên và Chuyên viên Cao cấp Kiểm định mô hình (Model Validation)',
+    'Chuyên viên/CVCC Phân tích Khách hàng cá nhân',
+    'Chuyên viên và Chuyên viên Cao cấp Phân tích Khách hàng doanh nghiệp',
+    'Data Scientist',
+    'Chuyên viên và Chuyên viên Cao cấp Phân tích quản trị',
+    'Data Analyst',
+    'Chuyên viên Phát triển kinh doanh SME Factory Micro Lending Squad',
+    'Chuyên viên kinh doanh thẻ',
+    'DevOps Engineer (Python, Nodejs, Java)', 'Lập trình viên Backend',
+    'Lập trình viên Mobile',
+    'Chuyên viên và Chuyên viên cao cấp Giám sát rủi ro tín dụng',
+    'Chuyên viên và Chuyên viên cao cấp Chính sách rủi ro tín dụng',
+    'Chuyên Viên Quản lý tuân thủ', 'Chuyên viên Điều tra',
+    'Chuyên viên và Chuyên viên cao cấp Quản lý pháp chế hệ thống',
+    'Kỹ Sư Phát Triển BackEnd', 'Kỹ sư Phát triển Fullstack',
+    'Kỹ sư Phát triển AI', 'Kỹ sư phát triển Mobile',
+    'Chuyên viên Quản lý xây dựng', 'Title: Giám đốc Dịch vụ',
+    'Giám đốc Phòng giao dịch', 'Giám đốc UB',
+    'Chuyên viên và Chuyên viên cao cấp Đầu tư chiến lược và M&A',
+    'Chuyên viên/ Chuyên viên cao cấp Quản trị rủi ro thị trường'
+]
+
+def pandas_job_retrieval(
+    workplace: str = "",
+    job_industry: str = "",
+    job_title: str = "",
+    min_salary: int = -1,
+    max_salary: int = -1,
+) -> str:
+    r"""Retrieve job opportunities at MB Bank based on user preferences.
+    This function should be used when:
+    - The user asks for information about job opportunities at MB Bank.
+    - The user describes their skills and wants to know if there are any suitable jobs at MB Bank.
+    - If the user ask about job family at MB Bank, don't trigger this tool
+    
+    If a parameter is not provided, just leave it, don't try to make up an value for it
+    
+    Parameters:
+        workplace (str): địa điểm làm việc mong muốn, giá trị parameter này sẽ thuộc vào danh sách sau: 
+                    ['Khánh Hòa', 'Hà Nam', 'Đà Nẵng', 'Đắk Lắk', 'Phú Yên', 'Nam Định',
+                    'Đắk Nông', 'Bình Định', 'Hải Phòng', 'Hà Nội', 'Hồ Chí Minh',
+                    'Bình Thuận', 'Cần Thơ', 'Sóc Trăng', 'Long An', 'Cà Mau',
+                    'Tiền Giang', 'Tây Ninh', 'Bình Dương', 'Kiên Giang', 'Đồng Nai',
+                    'Lâm Đồng', 'Đồng Tháp', 'Bình Phước', 'Bến Tre', 'Trà Vinh',
+                    'Ninh Bình', 'Hà Tĩnh', 'Thanh Hóa', 'Nghệ An', 'Yên Bái',
+                    'Vĩnh Phúc', 'Phú Thọ', 'Tuyên Quang', 'Bắc Ninh', 'Thái Nguyên',
+                    'Sơn La', 'Lào Cai', 'Lạng Sơn', 'Hưng Yên', 'Hòa Bình',
+                    'Hải Dương', 'Điện Biên', 'Bắc Giang', 'An Giang', 'Bạc Liêu',
+                    'Hậu Giang', 'Vĩnh Long', 'Bà Rịa - Vũng Tàu', 'Thừa Thiên Huế',
+                    'Quảng Trị', 'Quảng Ninh', 'Thái Bình', 'Gia Lai', 'Quảng Ngãi',
+                    'Quảng Nam', 'Quảng Bình', 'Ninh Thuận']
+        job_industry (str): ngành nghề mong muốn của user, giá trị biến này sẽ thuộc vào danh sách sau:
+                    ['Bán hàng / Kinh doanh',
+                    'Bảo trì / Sửa chữa',
+                    'Bộ phận pháp lý',
+                    'CNTT - Phần cứng / Mạng',
+                    'CNTT - Phần mềm',
+                    'Dịch vụ khách hàng',
+                    'Hành chính / Thư ký',
+                    'Kế toán / Kiểm toán',
+                    'Luật / Pháp lý',
+                    'Mỹ thuật / Nghệ thuật / Thiết kế',
+                    'Ngân hàng',
+                    'Nhân sự',
+                    'Quản lý điều hành',
+                    'Quảng cáo / Đối ngoại / Truyền Thông',
+                    'Tài chính / Đầu tư',
+                    'Tài chính kế hoạch',
+                    'Tư vấn']
+        job_title (str): chức danh nghề nghiệp mong muốn của user, giá trị biến này sẽ thuộc vào danh sách sau:
+                    ['Chuyên viên Khách hàng Cá nhân',
+                    'Chuyên viên Tập sự Khách hàng Cá nhân',
+                    'Chuyên viên Tập sự Khách hàng Doanh nghiệp',
+                    'Chuyên viên Khách hàng Doanh nghiệp',
+                    'Chuyên gia Phát triển dịch vụ (API)',
+                    'Chuyên viên Phát triển dịch vụ thẻ Khách hàng doanh nghiệp (BA thẻ)',
+                    'Cộng tác viên Tuyển dụng', 'Chuyên viên UB',
+                    'Chuyên viên Vận hành hệ thống', 'Data Platform Engineer',
+                    'Quality Assurance (QA)', 'UI UX Designer',
+                    'Chuyên viên Thúc đẩy bán Sản phẩm Tín dụng', 'Giao dịch viên',
+                    'Kiểm soát viên', 'Kiểm toán viên (mảng Mô hình, Dữ liệu)',
+                    'Phó phòng Khách hàng Cá nhân', 'Trưởng phòng Khách hàng Cá nhân',
+                    'Chuyên viên và Chuyên viên cao cấp Quản trị rủi ro mô hình',
+                    'Chuyên viên và Chuyên viên cao cấp Kiểm định Mô hình rủi ro',
+                    'Chuyên viên cao cấp Phân tích nghiệp vụ',
+                    'Chuyên viên và Chuyên viên cao cấp Xây dựng Mô hình rủi ro',
+                    'Red Team', 'Pentester', 'Chuyên viên kiến trúc an toàn thông tin',
+                    'Chuyên viên Giải pháp nền tảng',
+                    'Chuyên viên Phát triển nguồn lực',
+                    'Trưởng phòng Khách hàng Doanh nghiệp',
+                    'Nhân viên hành chính (NS)', 'Kiểm ngân', 'Giám đốc Dịch vụ',
+                    'Chuyên viên Tài trợ thương mại',
+                    'Chuyên viên Phát triển Kinh doanh Bancassurance',
+                    'Chuyên viên và Chuyên viên cao cấp Quản trị rủi ro tích hợp',
+                    'Chuyên viên Hỗ trợ', 'Giám đốc Quan hệ Khách hàng',
+                    'Chuyên viên Dịch vụ Tài trợ Thương mại',
+                    'Chuyên viên Kiểm thử tự động (Automation Tester)',
+                    'Chuyên viên Khách hàng lớn', 'Network Administrator',
+                    'Chuyên viên và Chuyên viên cao cấp Phát triển thương hiệu',
+                    'Chuyên viên và Chuyên viên cao cấp Quản trị nợ',
+                    'Chuyên viên Quản lý ứng dụng', 'AI Engineer', 'Kỹ sư Devsecops',
+                    'Chuyên viên cao cấp và Chuyên gia Tư vấn pháp chế',
+                    'Phó Giám đốc Chi nhánh (SME)', 'Chuyên viên Tập sự UB',
+                    'Chuyên viên Khách hàng Cá nhân (aRM)',
+                    'Chuyên viên Cao cấp và Chuyên gia Chính sách và chất lượng dữ liệu',
+                    'Data Architect', 'Data Engineer', 'Business Analyst',
+                    'Chuyên viên Cao cấp và Chuyên gia Quản lý cấu trúc dữ liệu',
+                    'Tester',
+                    'Chuyên viên và Chuyên viên Cao cấp Mô hình kinh doanh (Data scientist)',
+                    'Chuyên viên và Chuyên viên Cao cấp Công nghệ mô hình (AI/ML Ops)',
+                    'Chuyên viên và Chuyên viên Cao cấp Kiểm định mô hình (Model Validation)',
+                    'Chuyên viên/CVCC Phân tích Khách hàng cá nhân',
+                    'Chuyên viên và Chuyên viên Cao cấp Phân tích Khách hàng doanh nghiệp',
+                    'Data Scientist',
+                    'Chuyên viên và Chuyên viên Cao cấp Phân tích quản trị',
+                    'Data Analyst',
+                    'Chuyên viên Phát triển kinh doanh SME Factory Micro Lending Squad',
+                    'Chuyên viên kinh doanh thẻ',
+                    'DevOps Engineer (Python, Nodejs, Java)', 'Lập trình viên Backend',
+                    'Lập trình viên Mobile',
+                    'Chuyên viên và Chuyên viên cao cấp Giám sát rủi ro tín dụng',
+                    'Chuyên viên và Chuyên viên cao cấp Chính sách rủi ro tín dụng',
+                    'Chuyên Viên Quản lý tuân thủ', 'Chuyên viên Điều tra',
+                    'Chuyên viên và Chuyên viên cao cấp Quản lý pháp chế hệ thống',
+                    'Kỹ Sư Phát Triển BackEnd', 'Kỹ sư Phát triển Fullstack',
+                    'Kỹ sư Phát triển AI', 'Kỹ sư phát triển Mobile',
+                    'Chuyên viên Quản lý xây dựng', 'Title: Giám đốc Dịch vụ',
+                    'Giám đốc Phòng giao dịch', 'Giám đốc UB',
+                    'Chuyên viên và Chuyên viên cao cấp Đầu tư chiến lược và M&A',
+                    'Chuyên viên/ Chuyên viên cao cấp Quản trị rủi ro thị trường']
+        min_salary (int): mức lương mong muốn tối thiểu
+        max_salary (int): mức lương mong muốn tối đa
+    """
+    return ""
+
+
+USAGE_FUNCS: List[OpenAIFunction] = [
     OpenAIFunction(func)
     for func in [
         mb_information_retrieval,
-        job_retrieval,
-        mb_network_retrieval
+        mb_network_retrieval,
+        pandas_job_retrieval
     ]
 ]
 
 
 if __name__=="__main__":
-    for func in RETRIEVAL_FUNCS:
+    for func in USAGE_FUNCS:
         print(func.get_openai_tool_schema())
     
     

@@ -8,6 +8,7 @@ from libra.vectordb import (
     VectorDBQuery,
     VectorRecord,
 )
+from qdrant_client import QdrantClient
 
 DEFAULT_TOP_K_RESULTS = 1
 DEFAULT_SIMILARITY_THRESHOLD = 0.0
@@ -51,6 +52,7 @@ class VectorRetriever(BaseRetriever):
             storage
             if storage is not None
             else QdrantStorage(
+                client = QdrantClient(path='./libra_qdrant.db'),
                 vector_dim=self.embedding_model.get_output_dim()
             )
         )

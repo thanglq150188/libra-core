@@ -8,7 +8,7 @@ from libra.types.enums import ModelLabel
 from typing import Dict, Any
 from libra.config import ChatGPTConfig
 from libra.functions.retrieval_functions import job_retriever
-from tasks.chat_agent import ChatAgent
+from libra.agents import LibraAgent
 
 
 app = FastAPI()
@@ -22,7 +22,7 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
-chat_agent = ChatAgent()
+chat_agent = LibraAgent()
 
 
 async def stream_response(data: Dict[str, Any]):
