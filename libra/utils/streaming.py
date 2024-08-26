@@ -62,6 +62,9 @@ def tokens_from(text: str) -> List[str]: # type: ignore
     return output_tokens
 
 
+ERROR_MSG = "Xin lỗi bạn nha, hiện tại mình đang gặp trục trặc kỹ thuật nên chưa thể trả lời câu hỏi này. Bạn vui lòng hỏi câu khác hoặc quay lại sau nhé? Cảm ơn bạn đã thông cảm!"
+
+
 def parse_stream(
     response: Stream[ChatCompletionChunk] # type: ignore
 ) -> Dict: # type: ignore
@@ -108,11 +111,11 @@ def parse_stream(
             try:
                 tool_args = json.loads(tool_args)
             except json.JSONDecodeError:
-                error_msg = "Mình hiện tại chưa thể trả lời câu hỏi này của bạn do lỗi hệ thống, bạn vui lòng hỏi câu khác nha"                
+                error_msg = ERROR_MSG                
                 return create_output(answer=Ans.ZERO)
     
     if tool_name is None or tool_args is None:
-        error_msg = "Mình hiện tại chưa thể trả lời câu hỏi này của bạn do lỗi hệ thống, bạn vui lòng hỏi câu khác nha"        
+        error_msg = ERROR_MSG
         return create_output(answer=Ans.ZERO)
     
     action = {'name': tool_name, 'args': tool_args}    
@@ -124,20 +127,25 @@ def get_stream_from(
     config: Dict
 ) -> Stream[ChatCompletionChunk]: # type: ignore    
     
+    import time
+
     if config['error'] is not None:
         first_chunk = config['processed'][0].copy()
-        error_msg = str(config['Error'])
+        error_msg = str(config['error'])
         for token in tokens_from(error_msg):
             chunk = first_chunk.copy()
             chunk.choices[0].delta.content = token
+            time.sleep(0.01)
             yield chunk # type: ignore
                                 
     elif config['answer'] == Ans.ONE:
         if len(config['processed']) > 0:
             for chunk in config['processed']:
+                time.sleep(0.01)
                 yield chunk # type: ignore                
         for chunk in response:
             if is_valid(chunk):
+                time.sleep(0.01)
                 yield chunk # type: ignore
                 
     elif config['answer'] == Ans.TWO:
@@ -146,12 +154,14 @@ def get_stream_from(
         yield first_chunk # type: ignore
         for chunk in response:
             if is_valid(chunk):
+                time.sleep(0.01)
                 yield chunk # type: ignore                
     
     else:
         first_chunk = config['processed'][0].copy()
-        error_msg = str(config['Error'])
+        error_msg = str(config['error'])
         for token in tokens_from(error_msg):
             chunk = first_chunk.copy()
             chunk.choices[0].delta.content = token
+            time.sleep(0.01)
             yield chunk # type: ignore

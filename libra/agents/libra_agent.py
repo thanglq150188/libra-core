@@ -138,7 +138,7 @@ if __name__ == "__main__":
     agent = LibraAgent()
     
     response = agent.step(messages=[
-        {"role": "user", "content": "cuộc sống có ý nghĩa hơn, vì mùa đông buốt giá, lá khô trên từng bước chân"},
+        {"role": "user", "content": "MB có bao nhiêu công ty con?"},
     ])    
       
     for chunk in response:        
