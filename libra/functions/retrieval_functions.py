@@ -18,7 +18,7 @@ print('finish!')
 from qdrant_client import QdrantClient
 
 client = QdrantClient(
-    path='./libra_qdrant.db'
+    path='../libra_qdrant.db'
 )
 
 mb_info_storage_instance = QdrantStorage(
@@ -40,7 +40,8 @@ def mb_information_retrieval(
     r"""Retrieves MB Bank information based on a Vietnamese query.
 
     Use when user ask anything about MB (MB Bank) such as: MB Bank's history,
-    MB Bank's products and services, MB Bank's achievement, any problem relating to MB.        
+    MB Bank's products and services, MB Bank's achievement, MB Bank's officer salary, any problem relating to MB.  
+    Furthermore, if user want to receive advice about career path, use this function to add more context to your answer.      
 
     Args:
         query (str): A Vietnamese language query about MB Bank. You should generate this query as good as you can based on the conversation with user.
@@ -51,21 +52,23 @@ def mb_information_retrieval(
 
     Example:
         response = mb_information_retrieval("thông điệp của tổng giám đốc MB là gì")
+        response = mb_information_retrieval("Bạn có biết mức lương của MB như thế nào không")
+        response = mb_information_retrieval("Có bao nhiêu nhóm công việc và nhóm nghề nghiệp tại MB ?")
     """
     results = mb_info_retriever.query(
         query=query,
-        top_k=3
+        top_k=6
     )
     
     retrieved_info_text = "\n".join(
         info['text'] for info in results if 'text' in info
     )
     
-    text_info = (
-        f"câu hỏi:\n{query}\n"
-        f"Tài liệu cung cấp:\n{retrieved_info_text}"
-    )
-    return text_info
+    # text_info = (
+    #     f"câu hỏi:\n{query}\n"
+    #     f"Tài liệu cung cấp:\n{retrieved_info_text}"
+    # )
+    return retrieved_info_text
 
 
 job_storage_instance = QdrantStorage(
@@ -92,6 +95,7 @@ def job_retrieval(
     This function should be used when:
     - The user asks for information about job opportunities at MB Bank.
     - The user describes their skills and wants to know if there are any suitable jobs at MB Bank.
+    - If the user ask about job family at MB Bank, don't trigger this tool
     
     If no parameter is provided, ask the user for one of the follow missing information (randomly):
     - workplace

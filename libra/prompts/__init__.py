@@ -1,5 +1,6 @@
-from .system import SYSTEM_INIT_PROMPT
+from .system import SYSTEM_INIT_PROMPT, LLAMAINDEX_REACT_PROMPT
 
 __all__ = [
     'SYSTEM_INIT_PROMPT',
+    'LLAMAINDEX_REACT_PROMPT'
 ]

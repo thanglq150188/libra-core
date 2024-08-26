@@ -70,6 +70,7 @@ class ChatAgent:
                     tool_call_chunk = chunk.choices[0].delta.tool_calls[0] 
                     tool_arguments += tool_call_chunk.function.arguments
             tool_arguments = json.loads(tool_arguments)
+            print(tool_name, ":", tool_arguments)
             result = globals()[tool_name](**tool_arguments) # type: ignore
             tool_call_msg = {
                 "role": "assistant",
@@ -107,3 +108,14 @@ class ChatAgent:
                     chunk_text = chunk.choices[0].delta.content
                     if chunk_text is not None:
                         yield chunk
+                        
+                        
+if __name__ == "__main__":
+    agent = ChatAgent()
+    response = agent.step(messages=[
+        {"role": "user", "content": "Các nhóm công việc ở MB là gì"}
+    ])
+    
+    for chunk in response:
+        print(chunk.choices[0].delta.content, end="")
+        
