@@ -6,6 +6,12 @@ from .base import (
     VectorRecord
 )
 
+import os
+
+from dotenv import load_dotenv
+
+load_dotenv(override=True)
+
 from .qdrant import QdrantStorage
 
 from .milvus import MilvusStorage
@@ -13,7 +19,7 @@ from .milvus import MilvusStorage
 from qdrant_client import QdrantClient
 
 qdrant_instance = QdrantClient(
-    path='./libra_qdrant.db'
+    path=os.environ['LOCAL_QDRANT_PATH']
 )
 
 __all__ = [

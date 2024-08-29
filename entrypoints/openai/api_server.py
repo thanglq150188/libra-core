@@ -25,6 +25,11 @@ app.add_middleware(
 chat_agent = LibraAgent()
 
 
+@app.get("/actuator/health", status_code=200)
+async def health_check():
+    return "OK"
+
+
 async def stream_response(data: Dict[str, Any]):
     messages = data.get("messages", [])    
     response = chat_agent.step(

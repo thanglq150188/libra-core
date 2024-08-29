@@ -19,6 +19,10 @@ from openai import Stream
 import libra.logs as logs
 import libra.response.streams as st
 
+from dotenv import load_dotenv
+
+load_dotenv(override=True)
+
 
 def create_libra_system_prompt(
     inner_system_message: str,
@@ -44,6 +48,8 @@ def create_libra_system_prompt(
     return prompt
 
 
+import os
+
 class LibraAgent:
     
     def __init__(
@@ -52,11 +58,14 @@ class LibraAgent:
         model: Optional[ModelBackend] = None,
         tools: Optional[List[OpenAIFunction]] = None,
     ) -> None:
+        
+        model_label = ModelLabel.AZURE_GPT_4o if os.environ['MODEL_USE'] =='AZURE' else ModelLabel.GPT_4o
+        
         self.model: ModelBackend = (
             model
             if model is not None
             else ModelFactory.create(
-                model_label=ModelLabel.GPT_4o,
+                model_label=model_label,
                 model_config_dict=ChatGPTConfig(
                     stream=True,
                     temperature=0.0
