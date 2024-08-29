@@ -41,7 +41,7 @@ def job_retrieval(
     def check_contains(entry: Dict) -> bool: # type: ignore
         contain_industry = False
         for ind in industries:
-            if (ind in entry['title']):
+            if (ind.lower() in entry['title'].lower()):
                 contain_industry = True
                 
         return contain_industry and entry['workplace'] == workplace
@@ -71,7 +71,7 @@ def job_retrieval(
     
 
 if __name__ == "__main__"  :
-    result = job_retrieval(industry="fsdfsfds ", workplace="Hà Nội")        
+    result = job_retrieval(industry="Chuyên viên khách hàng cá nhân", workplace="Hà Nội")        
     for entry in result:
         print(entry)
         print()
