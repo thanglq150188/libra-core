@@ -1,6 +1,6 @@
 import gradio as gr
-from libra.agents.libra_agent_new import LibraAgent
-import libra.utils.streaming as st
+from libra.agents.libra_agent import LibraAgent
+from libra.response import streams as st
 
 chat_agent = LibraAgent()
 

@@ -1,20 +1,18 @@
 from typing import List, Union, Dict
-
-from libra.functions import OpenAIFunction
-from libra.retrievers import VectorRetriever
-from libra.vectordb.qdrant import QdrantStorage
-from libra.vectordb import qdrant_instance
-from libra.embeddings import bge_instance
-
-
 import json
+
 
 with open("./data/old_jobs_data.json", "r", encoding="utf-8") as f:
     data = json.load(f)
-    
-import pandas as pd
 
-jobs_df = pd.DataFrame(data)
+
+titles = [
+    "Chuyên viên Khách hàng Cá nhân",
+    "Chương trình The Banker"
+    "Chuyên viên Khách hàng Doanh nghiệp",
+    "Chuyên viên Tư vấn khách hàng cá nhân",
+    "Quản lý chi nhánh"
+]
 
 
 def job_retrieval(
@@ -38,30 +36,43 @@ def job_retrieval(
 
     Note: Always include the URL of the job posting in the response.
     """
-    output_df = jobs_df.copy()    
+    industries = [e.strip() for e in industry.split(',')]
     
-    output_df = output_df[output_df['workplace'] == workplace]
-    workplace_df = output_df.copy()
-            
-    if industry != "":
-        mask = output_df['industry'].str.contains(industry, case=False, na=False)
-        output_df = output_df[mask]
+    def check_contains(entry: Dict) -> bool: # type: ignore
+        contain_industry = False
+        for ind in industries:
+            if (ind in entry['title']):
+                contain_industry = True
+                
+        return contain_industry and entry['workplace'] == workplace
     
-    json_result = output_df.to_json(orient='records', force_ascii=False)
-    json_result = json.loads(json_result)
+    def check_contains_workplace(entry: Dict) -> bool: # type: ignore
+        return entry['workplace'] == workplace
+        
+    results = []
+    for entry in data:
+        if check_contains(entry):
+            results.append(entry)
     
-    import random 
-    if len(json_result) >= top_k:
+    if len(results) < top_k:
+        results = []
+        for entry in data:
+            if check_contains_workplace(entry):
+                results.append(entry)
+    
+    import random
 
-        json_result = random.choices(json_result, k=top_k)
+    if len(results) > top_k:
+        results = random.choices(results, k=top_k)
     else:
-        json_result = jobs_df.to_json(orient='records', force_ascii=False)
-        json_result = random.choices(json_result, k=top_k)
+        results = random.choices(data, k=top_k)
     
-    return json_result
-
+    return results
+    
 
 if __name__ == "__main__"  :
-    result = job_retrieval(industry="Ngân hàng")
-    print(len(result))
+    result = job_retrieval(industry="fsdfsfds ", workplace="Hà Nội")        
+    for entry in result:
+        print(entry)
+        print()
     

@@ -7,7 +7,7 @@ from libra.models.model_factory import ModelFactory
 from libra.types.enums import ModelLabel
 from typing import Dict, Any
 from libra.config import ChatGPTConfig
-from libra.agents.libra_agent_new import LibraAgent
+from libra.agents.libra_agent import LibraAgent
 from libra.functions.retrieval_functions import job_retrieval
 
 
