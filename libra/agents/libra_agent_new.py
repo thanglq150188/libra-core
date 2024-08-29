@@ -11,11 +11,13 @@ from libra.prompts import (
     TOOL_FORMAT_PROMPT
 )
 
+import json
+
 from libra.messages import OpenAIMessage
 from libra.types import ChatCompletionChunk
 from openai import Stream
-from libra.utils import streaming as st
 import libra.logs as logs
+import libra.response.streams as st
 
 
 def create_libra_system_prompt(
@@ -79,11 +81,11 @@ class LibraAgent:
                 if system_message is not None
                 else SYSTEM_INIT_PROMPT
             )
-        )  
-
+        )
+    
     def step(
         self,
-        messages: List[OpenAIMessage], # type: ignore
+        messages: List[OpenAIMessage],
         window_size: int = 4
     ) -> Stream[ChatCompletionChunk]: # type: ignore
         prompts: List[OpenAIMessage] = [ # type: ignore
@@ -93,49 +95,33 @@ class LibraAgent:
         last_messages = messages[-limit:] if len(messages) > limit else messages
         prompts.extend(last_messages)
         
-        logs.print_color(last_messages[-1], Fore.YELLOW) # type: ignore
+        logs.print_color(f"Question: {last_messages[-1]['content']}", Fore.YELLOW) # type: ignore
         
         response = self.model.run(messages=prompts)
         
-        stream_config = st.parse_stream(response)
-        
-        processed_text = st.join_content_of(stream_config['processed'])
-        
-        if stream_config['answer'] != st.Ans.ONE:
-            logs.print_color(processed_text, Fore.LIGHTCYAN_EX)
+        aresponse = st.AgentResponse(response)
+        for chunk in aresponse.stream():
+            logs.print_color(st.content_of(chunk), Fore.LIGHTGREEN_EX, end="")
+            yield chunk # type: ignore
             
-        if stream_config['action']:
-            name = stream_config['action']['name']
-            arguments = stream_config['action']['args']
-            results = self.tool_dict[name](**arguments)
-            logs.print_color(results, Fore.BLUE)
+        action = aresponse.action()        
+        if action != "":
+            params = json.loads(aresponse.params())
+            observation = self.tool_dict[action](**params)
+            logs.print_color(aresponse.to_action_msg(), Fore.LIGHTCYAN_EX)
+            logs.print_color(observation, Fore.BLUE)
             prompts.extend([
-                {"role": "assistant", "content": processed_text},
-                {"role": "user", "content": f"Observation:  {results}"}
+                {"role": "assistant", "content": aresponse.to_action_msg()},
+                {"role": "user", "content": f"Observation: {observation}"}
             ])
+            response_2nd = self.model.run(prompts) # type: ignore
+            aresponse_2nd = st.AgentResponse(response_2nd)
+            for chunk in aresponse_2nd.stream():
+                logs.print_color(st.content_of(chunk), Fore.LIGHTGREEN_EX, end="")
+                yield chunk # type: ignore
             
-            second_response = self.model.run(prompts) # type: ignore
-            second_stream_config = st.parse_stream(second_response)            
-            for chunk in st.get_stream_from(
-                response=second_response, 
-                config=second_stream_config
-            ):
-                if st.is_valid(chunk):
-                    logs.print_color(st.content_of(chunk), Fore.LIGHTGREEN_EX, end="")
-                    yield chunk # type: ignore
-        else:
-            generator = st.get_stream_from(
-                response=response,
-                config=stream_config
-            )
-            
-            for chunk in generator:
-                if st.is_valid(chunk):
-                    logs.print_color(st.content_of(chunk), Fore.LIGHTGREEN_EX, end="")
-                    yield chunk # type: ignore      
-        
 
-if __name__ == "__main__":
+if __name__=="__main__":
     import time
     
     agent = LibraAgent()

@@ -106,8 +106,8 @@ def parse_stream(
     for line in lines:
         if line.startswith("Action: "):
             tool_name = line.replace("Action: ", "")
-        if line.startswith("Action Input: "):
-            tool_args = line.replace("Action Input: ", "")
+        if line.startswith("Params: "):
+            tool_args = line.replace("Params: ", "")
             try:
                 tool_args = json.loads(tool_args)
             except json.JSONDecodeError:

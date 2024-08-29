@@ -1,5 +1,5 @@
 import gradio as gr
-from libra.agents import LibraAgent
+from libra.agents.libra_agent_new import LibraAgent
 import libra.utils.streaming as st
 
 chat_agent = LibraAgent()
@@ -18,8 +18,6 @@ def chatbot(message, history):
     for chunk in response:
         if st.is_valid(chunk):
             chunk_text = st.content_of(chunk)
-            if chunk_text == "Thought" or chunk_text == "thought":
-                return
             full_response += chunk_text
             yield full_response
             

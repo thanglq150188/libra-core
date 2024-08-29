@@ -7,8 +7,8 @@ from libra.models.model_factory import ModelFactory
 from libra.types.enums import ModelLabel
 from typing import Dict, Any
 from libra.config import ChatGPTConfig
-from libra.functions.retrieval_functions import job_retriever
-from libra.agents import LibraAgent
+from libra.agents.libra_agent_new import LibraAgent
+from libra.functions.retrieval_functions import job_retrieval
 
 
 app = FastAPI()
@@ -46,11 +46,23 @@ async def stream_model_response(request: Request):
 @app.post("/search_jobs")
 async def search_jobs(request: Request):
     data = await request.json()
-    query = data['query']
-    top_k = int(data['top_k'])
-    results = job_retriever.query(
-        query=query,
-        top_k=top_k
+    print(data)
+    workplace = ""
+    if "workplace" in data:
+        workplace = data['workplace']
+    
+    industry = ""
+    if "industry" in data:
+        industry = data['industry']
+        
+    top_k = 3
+    if "top_k" in industry:
+        top_k = int(data['top_k'])
+
+    results = job_retrieval(
+        workplace = workplace,
+        industry = industry,
+        top_k = top_k
     )
     return JSONResponse(content=results)
 

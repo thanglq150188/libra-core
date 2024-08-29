@@ -3,10 +3,18 @@ from .base import (
     VectorDBQuery,
     VectorDBQueryResult,
     VectorDBStatus,
-    VectorRecord,
+    VectorRecord
 )
-from .milvus import MilvusStorage
+
 from .qdrant import QdrantStorage
+
+from .milvus import MilvusStorage
+
+from qdrant_client import QdrantClient
+
+qdrant_instance = QdrantClient(
+    path='./libra_qdrant.db'
+)
 
 __all__ = [
     'BaseVectorStorage',
@@ -15,4 +23,6 @@ __all__ = [
     'MilvusStorage',
     'VectorRecord',
     'VectorDBStatus',
+    "qdrant_instance",
+    'QdrantStorage'
 ]
