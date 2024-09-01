@@ -2,23 +2,47 @@ from typing import List, Union, Dict
 
 from libra.functions import OpenAIFunction
 from libra.retrievers import VectorRetriever
-from libra.vectordb.qdrant import QdrantStorage
-from libra.vectordb import qdrant_instance
-from libra.embeddings import bge_instance
+from libra.vectordb import QdrantStorage
+from libra.types import (
+    VectorDBLabel, 
+    EmbeddingLabel, 
+    EmbeddingCompany
+)
+from libra.embeddings import (
+    OpenAIEmbedding,
+    SentenceTransformerEncoder
+)
+
+from libra.config.common_config import CommonConfig
+from qdrant_client import QdrantClient
 
 from dotenv import load_dotenv
+import os
 
 load_dotenv(override=True)
 
+if CommonConfig().vectordb != VectorDBLabel.QDRANT:
+    raise ValueError("This function requires Qdrant as the vector database")
+
+vectordb_instance = QdrantClient(
+    path=os.environ['LOCAL_QDRANT_PATH']
+)
+
+if CommonConfig().embedding.of_company == EmbeddingCompany.OPENAI:
+    emb_instance = OpenAIEmbedding()
+else:
+    emb_instance = SentenceTransformerEncoder(
+        model_name=os.environ["LOCAL_EMBEDDING_PATH"]
+    )
 
 mb_info_storage_instance = QdrantStorage(
-    client=qdrant_instance,
-    vector_dim=bge_instance.get_output_dim(),
+    client=vectordb_instance,
+    vector_dim=emb_instance.get_output_dim(),
     collection_name="MBInfo"
 )
 
 mb_info_retriever = VectorRetriever(
-    embedding_model=bge_instance, 
+    embedding_model=emb_instance, 
     storage=mb_info_storage_instance
 )
 
@@ -54,8 +78,8 @@ def mb_information_retrieval(
     )
     
     return f"""
-tài liệu được tìm thấy: {retrieved_info_text}
 Lưu ý: Nếu tài liệu không có thông tin cần thiết, cứ trả lời là bạn không có đủ thông tin nên không thể giải đáp.
+tài liệu được tìm thấy: {retrieved_info_text}
 """
 
 def mb_network_retrieval():
@@ -147,13 +171,13 @@ def contains_any(industry_list, search_terms):
 
 
 job_title_storage_instance = QdrantStorage(
-    client=qdrant_instance,
-    vector_dim=bge_instance.get_output_dim(),
+    client=vectordb_instance,
+    vector_dim=emb_instance.get_output_dim(),
     collection_name="job_title"
 )
 
 job_title_retriever = VectorRetriever(
-    embedding_model=bge_instance,
+    embedding_model=emb_instance,
     storage=job_title_storage_instance,
     similarity_threshold=0.6
 )
@@ -251,8 +275,8 @@ Jobs tìm được: {acquire_jobs}
 """
             else:
                  return f"""
+Lưu ý: số lượng jobs tìm được khá lớn, nên yêu cầu khách hàng cung cấp thêm {remain_params} để khoanh vùng lại.             
 Jobs tìm được: {acquire_jobs}
-Lưu ý: số lượng jobs tìm được khá lớn, nên yêu cầu khách hàng cung cấp thêm {remain_params} để khoanh vùng lại.
 """
 
 LIBRA_FUNCS: List[OpenAIFunction] = [

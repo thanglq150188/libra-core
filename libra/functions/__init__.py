@@ -12,7 +12,7 @@
 # limitations under the License.
 # =========== Copyright 2023 @ CAMEL-AI.org. All Rights Reserved. ===========
 # ruff: noqa: I001
-from .openai_function import (
+from .base_openai_function import (
     OpenAIFunction,
     get_openai_function_schema,
     get_openai_tool_schema,

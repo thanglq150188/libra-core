@@ -16,12 +16,6 @@ from .qdrant import QdrantStorage
 
 from .milvus import MilvusStorage
 
-from qdrant_client import QdrantClient
-
-qdrant_instance = QdrantClient(
-    path=os.environ['LOCAL_QDRANT_PATH']
-)
-
 __all__ = [
     'BaseVectorStorage',
     'VectorDBQuery',
@@ -29,6 +23,5 @@ __all__ = [
     'MilvusStorage',
     'VectorRecord',
     'VectorDBStatus',
-    "qdrant_instance",
     'QdrantStorage'
 ]

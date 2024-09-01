@@ -16,7 +16,7 @@ class ModelFactory:
         model_label: ModelLabel,
         model_config_dict: Dict,        
     ) -> ModelBackend:
-        model_company = model_label.company
+        model_company = model_label.of_company
         if model_company == ModelCompany.OPENAI:
             model_class = OpenAIModel
         elif model_company == ModelCompany.AZURE:

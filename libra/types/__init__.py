@@ -12,9 +12,11 @@
 # limitations under the License.
 # =========== Copyright 2023 @ CAMEL-AI.org. All Rights Reserved. ===========
 from .enums import (
-    EmbeddingModelType,
-    ModelCompany,
+    EmbeddingLabel,
+    EmbeddingCompany,
     ModelLabel,
+    ModelCompany,
+    VectorDBLabel,
     VectorDistance
 )
 from .openai_types import (
@@ -31,9 +33,11 @@ from .openai_types import (
 )
 
 __all__ = [
-    'EmbeddingModelType',
-    'ModelCompany',
+    'EmbeddingLabel',
+    'EmbeddingCompany',
     'ModelLabel',
+    'ModelCompany',
+    'VectorDBLabel',
     'VectorDistance',
     'Choice',
     'ChatCompletion',

@@ -6,7 +6,7 @@ from typing import Any
 from openai import NOT_GIVEN, NotGiven, OpenAI
 
 from libra.embeddings.base import BaseEmbedding
-from libra.types import EmbeddingModelType
+from libra.types import EmbeddingLabel
 
 
 class OpenAIEmbedding(BaseEmbedding):
@@ -27,13 +27,13 @@ class OpenAIEmbedding(BaseEmbedding):
 
     def __init__(
         self,
-        model_type: EmbeddingModelType = (
-            EmbeddingModelType.TEXT_EMBEDDING_3_SMALL
+        model_type: EmbeddingLabel = (
+            EmbeddingLabel.TEXT_EMBEDDING_3_SMALL
         ),
         api_key: str | None = None,
         dimensions: int | NotGiven = NOT_GIVEN,
     ) -> None:
-        if not model_type.is_openai:
+        if not model_type.of_company:
             raise ValueError("Invalid OpenAI embedding model type.")
         self.model_type = model_type
         if dimensions == NOT_GIVEN:

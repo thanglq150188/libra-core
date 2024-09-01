@@ -8,7 +8,8 @@ from libra.config import ChatGPTConfig
 from libra.prompts import (
     SYSTEM_INIT_PROMPT,
     LLAMAINDEX_REACT_PROMPT,
-    TOOL_FORMAT_PROMPT
+    TOOL_FORMAT_PROMPT,
+    SYSTEM_ANSWER_PROMPT
 )
 
 import json
@@ -18,6 +19,7 @@ from libra.types import ChatCompletionChunk
 from openai import Stream
 import libra.logs as logs
 import libra.response.streams as st
+from libra.config.common_config import CommonConfig
 
 from dotenv import load_dotenv
 
@@ -48,6 +50,21 @@ def create_libra_system_prompt(
     return prompt
 
 
+def create_prompts(
+    system_message, 
+    conversation
+) -> List[OpenAIMessage]: # type: ignore
+    prompts: List[OpenAIMessage] = [ # type: ignore
+        {"role": "system", "content": system_message}
+    ]
+    window_size = CommonConfig().window_size
+    limit = 2 * window_size + 1
+    last_messages = conversation[-limit:] if len(conversation) > limit else conversation
+    prompts.extend(last_messages)
+    return prompts
+
+
+
 import os
 
 class LibraAgent:
@@ -58,17 +75,16 @@ class LibraAgent:
         model: Optional[ModelBackend] = None,
         tools: Optional[List[OpenAIFunction]] = None,
     ) -> None:
-        
-        model_label = ModelLabel.AZURE_GPT_4o if os.environ['MODEL_USE'] =='AZURE' else ModelLabel.GPT_4o
-        
+                
         self.model: ModelBackend = (
             model
             if model is not None
             else ModelFactory.create(
-                model_label=model_label,
+                model_label=CommonConfig().model,
                 model_config_dict=ChatGPTConfig(
                     stream=True,
-                    temperature=0.0
+                    temperature=0.0,
+                    top_p=0.00001
                 ).__dict__
             )
         )                
@@ -90,44 +106,55 @@ class LibraAgent:
                 if system_message is not None
                 else SYSTEM_INIT_PROMPT
             )
-        )
+        )            
     
     def step(
         self,
-        messages: List[OpenAIMessage],
-        window_size: int = 4
+        messages: List[OpenAIMessage], # type: ignore
     ) -> Stream[ChatCompletionChunk]: # type: ignore
-        prompts: List[OpenAIMessage] = [ # type: ignore
-            {"role": "system", "content": self.system_message}
-        ]
-        limit = 2 * window_size + 1
-        last_messages = messages[-limit:] if len(messages) > limit else messages
-        prompts.extend(last_messages)
+        prompts = create_prompts(self.system_message, messages)
         
-        logs.print_color(f"Question: {last_messages[-1]['content']}", Fore.YELLOW) # type: ignore
-        
-        response = self.model.run(messages=prompts)
-        
-        aresponse = st.AgentResponse(response)
-        for chunk in aresponse.stream():
-            logs.print_color(st.content_of(chunk), Fore.LIGHTGREEN_EX, end="")
-            yield chunk # type: ignore
-            
-        action = aresponse.action()        
-        if action != "":
-            params = json.loads(aresponse.params())
-            observation = self.tool_dict[action](**params)
-            logs.print_color(aresponse.to_action_msg(), Fore.LIGHTCYAN_EX)
-            logs.print_color(observation, Fore.BLUE)
-            prompts.extend([
-                {"role": "assistant", "content": aresponse.to_action_msg()},
-                {"role": "user", "content": f"Observation: {observation}"}
-            ])
-            response_2nd = self.model.run(prompts) # type: ignore
-            aresponse_2nd = st.AgentResponse(response_2nd)
-            for chunk in aresponse_2nd.stream():
+        logs.print_color(f"Question: {messages[-1]['content']}", Fore.YELLOW) # type: ignore
+
+        action_count = 0
+        previous_action = None
+        stop = False
+        while not stop:
+            response = self.model.run(messages=prompts)
+            agent_response = st.AgentResponse(response)
+            for chunk in agent_response.stream():
                 logs.print_color(st.content_of(chunk), Fore.LIGHTGREEN_EX, end="")
                 yield chunk # type: ignore
+            
+            action = agent_response.action()
+            
+            if action != "":
+                params = json.loads(agent_response.params())
+                observation = self.tool_dict[action](**params)
+                logs.print_color(agent_response.to_action_msg(), Fore.LIGHTCYAN_EX)
+                logs.print_color(observation, Fore.BLUE)
+
+                if action != previous_action:
+                    action_count += 1
+                
+                if action == previous_action or action_count >= 2:
+                    # Return the lastest state
+                    stop = True
+                    prompts = create_prompts(SYSTEM_ANSWER_PROMPT, messages)
+                    response = self.model.run(messages=prompts)
+                    agent_response = st.AgentResponse(response)
+                    for chunk in agent_response.stream():
+                        logs.print_color(st.content_of(chunk), Fore.LIGHTGREEN_EX, end="")
+                        yield chunk # type: ignore
+                else:
+                    prompts.extend([
+                        {"role": "assistant", "content": agent_response.to_action_msg()},
+                        {"role": "user", "content": f"Observation: {observation}"}
+                    ])
+            else:
+                stop = True
+            
+            previous_action = action
             
 
 if __name__=="__main__":
@@ -136,7 +163,7 @@ if __name__=="__main__":
     agent = LibraAgent()
     
     response = agent.step(messages=[
-        {"role": "user", "content": "Tôi đang học chuyên ngành Tài chính Ngân hàng. Tôi có thể làm việc ở những vị trí gì?"},
+        {"role": "user", "content": "cùng nhảy nào, bạn của tôi ơi, tằng tắng tăng tăng!"},
     ])
     
     for chunk in response:
