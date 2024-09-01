@@ -1,4 +1,6 @@
-mb_network_address = """Danh sách chi nhánh và phòng giao dịch của MB trên cả nước
+mb_network_address = """
+Cần đưa ra câu trả lời chính xác, không trả lời chung kiểu "rất nhiều", nếu câu trả lời không tồn tại trong tài liệu, trả ra không có
+Danh sách chi nhánh và phòng giao dịch của MB trên cả nước
 Khu vực Hà Nội,Hà Nội 1,CN. Bà Triệu,Trụ sở,Hà Nội,Quận Hoàn Kiếm,Số 18 Đường Ngô Quyền - Phường Tràng Tiền - Quận Hoàn Kiếm - Hà Nội
 Khu vực Hà Nội,Hà Nội 1,CN. Bạch Mai,Trụ sở,Hà Nội,Quận Hai Bà Trưng,"Một phần Tầng 1 Trung tâm thương mại Chợ Mơ, số 459C phố Bạch Mai - Phường Trương Định - Quận Hai Bà Trưng - Hà Nội"
 Khu vực Hà Nội,Hà Nội 1,CN. Điện Biên Phủ,Trụ sở,Hà Nội,Quận Ba Đình,Số 28A đường Điện Biên Phủ - Phường Điện Biên - Quận Ba Đình - Hà Nội

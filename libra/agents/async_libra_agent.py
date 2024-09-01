@@ -188,7 +188,7 @@ async def main():
     agent = AsyncLibraAgent()
     
     async for chunk in agent.astep(messages=[
-        {"role": "user", "content": "MB có chi nhánh nào ở Hà Nội không?"},
+        {"role": "user", "content": "MB có tất cả bao nhiêu chi nhánh tại Sài Gòn"},
     ]):
         pass
 
