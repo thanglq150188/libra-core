@@ -2,7 +2,7 @@ import os
 import requests
 from libra.types import ModelLabel, ChatCompletion, ChatCompletionChunk
 from libra.messages import OpenAIMessage
-from openai import OpenAI, Stream
+from openai import OpenAI, AsyncOpenAI, Stream
 from typing import Dict, Any, List, Union
 from libra.models.base_model import ModelBackend
 
@@ -30,7 +30,11 @@ class OpenAIModel(ModelBackend):
         self.model_config_dict = model_config_dict
         self._client = OpenAI(
             api_key=os.environ.get('OPENAI_API_KEY')
+        )
+        self._async_client = AsyncOpenAI(
+            api_key=os.environ.get('OPENAI_API_KEY')
         )                     
+
     
     def run(
         self,
@@ -52,7 +56,29 @@ class OpenAIModel(ModelBackend):
             model=self.model_label.value,
             **self.model_config_dict,
         )
-        return response    
+        return response
+    
+    async def run_async(
+        self,
+        messages: List[OpenAIMessage], # type: ignore
+    ) -> Union[ChatCompletion, Stream[ChatCompletionChunk]]: # type: ignore
+        r"""Runs inference of OpenAI chat completion asynchronously.
+
+        Args:
+            messages (List[OpenAIMessage]): Message list with the chat history
+                in OpenAI API format.
+
+        Returns:
+            Union[ChatCompletion, Stream[ChatCompletionChunk]]:
+                `ChatCompletion` in the non-stream mode, or
+                `Stream[ChatCompletionChunk]` in the stream mode.
+        """
+        response = await self._async_client.chat.completions.create(
+            messages=messages,
+            model=self.model_label.value,
+            **self.model_config_dict,
+        )
+        return response
 
     @property
     def stream(self) -> bool:

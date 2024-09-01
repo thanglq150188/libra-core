@@ -27,6 +27,24 @@ class ModelBackend(ABC):
         """
         pass
     
+    @abstractmethod
+    async def run_async(
+        self,
+        messages: List[OpenAIMessage], # type: ignore
+    ) -> Union[ChatCompletion, Stream[ChatCompletionChunk]]: # type: ignore
+        r"""Runs the query to the backend model asynchronously.
+
+        Args:
+            messages (List[OpenAIMessage]): Message list with the chat history
+                in OpenAI API format.
+
+        Returns:
+            Union[ChatCompletion, Stream[ChatCompletionChunk]]:
+                `ChatCompletion` in the non-stream mode, or
+                `Stream[ChatCompletionChunk]` in the stream mode.
+        """
+        pass
+    
     @property
     def stream(self) -> bool:
         r"""Returns whether the model is in stream mode,

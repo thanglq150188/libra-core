@@ -49,7 +49,7 @@ mb_info_retriever = VectorRetriever(
 
 def mb_information_retrieval(
     query: str,
-) -> str:
+) -> Dict[str, str]:
     r"""Retrieves MB Bank information based on a Vietnamese query.
 
     Use when user ask anything about MB (MB Bank) such as: MB Bank's history,
@@ -77,10 +77,18 @@ def mb_information_retrieval(
         info['text'] for info in results if 'text' in info
     )
     
-    return f"""
+    display_text = "\n  - ".join(
+        info['metadata']['embed'] for info in results
+    )
+    
+    result = f"""
 Lưu ý: Nếu tài liệu không có thông tin cần thiết, cứ trả lời là bạn không có đủ thông tin nên không thể giải đáp.
 tài liệu được tìm thấy: {retrieved_info_text}
 """
+    return {
+        "display": display_text,
+        "document": result,
+    }
 
 def mb_network_retrieval():
     """Retrieve information about MB Bank branches and transaction offices.
@@ -90,7 +98,10 @@ def mb_network_retrieval():
         - The user requests details about a particular branch or transaction office.
     """
     from data.mb_network import mb_network_address
-    return mb_network_address
+    return {
+        "display": "danh sách địa chỉ mạng lưới MB",
+        "document": mb_network_address,
+    }
 
 
 import json
@@ -188,7 +199,7 @@ def pandas_job_retrieval(
     job_industry: str = "",
     job_title: str = "",
     salary: int = -1,
-) -> str:
+) -> Dict[str, str]:
     r"""Retrieve job opportunities at MB Bank based on user preferences.
     This function should be used when:
     - The user asks for information about job opportunities at MB Bank.
@@ -255,12 +266,14 @@ def pandas_job_retrieval(
         output_df = output_df[(output_df['min_salary'] < salary) & (output_df['max_salary'] > salary)]
     else:
         remain_params.append('salary')
-        
+    
+    result = "không có gì"
+    
     if len(remain_params) == 4:
-        return f"There is no parameter provided. Asking user for them, including {remain_params}"
+        result = f"There is no parameter provided. Asking user for them, including {remain_params}"
     else:
         if len(output_df) == 0:
-            return "không tìm thấy jobs phù hợp"
+            result = "không tìm thấy jobs phù hợp"
         else:        
             acquire_jobs = "\n"
             chosen_size = 3 if len(output_df) > 3 else len(output_df)        
@@ -270,14 +283,18 @@ def pandas_job_retrieval(
                 acquire_jobs += "-"*100 +"\n"
             
             if len(output_df) < 3:
-                return f"""
+                result = f"""
 Jobs tìm được: {acquire_jobs}
 """
             else:
-                 return f"""
+                result = f"""
 Lưu ý: số lượng jobs tìm được khá lớn, nên yêu cầu khách hàng cung cấp thêm {remain_params} để khoanh vùng lại.             
 Jobs tìm được: {acquire_jobs}
 """
+    return {
+        "display": result,
+        "document": result,
+    }
 
 LIBRA_FUNCS: List[OpenAIFunction] = [
     OpenAIFunction(func)

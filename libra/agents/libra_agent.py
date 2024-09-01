@@ -16,7 +16,7 @@ import json
 
 from libra.messages import OpenAIMessage
 from libra.types import ChatCompletionChunk
-from openai import Stream
+from openai import Stream, AsyncStream
 import libra.logs as logs
 import libra.response.streams as st
 from libra.config.common_config import CommonConfig
@@ -62,7 +62,6 @@ def create_prompts(
     last_messages = conversation[-limit:] if len(conversation) > limit else conversation
     prompts.extend(last_messages)
     return prompts
-
 
 
 import os
@@ -127,7 +126,6 @@ class LibraAgent:
                 yield chunk # type: ignore
             
             action = agent_response.action()
-            
             if action != "":
                 params = json.loads(agent_response.params())
                 observation = self.tool_dict[action](**params)
@@ -152,6 +150,20 @@ class LibraAgent:
                         {"role": "user", "content": f"Observation: {observation}"}
                     ])
             else:
+                text = agent_response.text()
+                answer = agent_response.answer()
+                thought = agent_response.thought()
+                if text == "" and answer == "":
+                    logs.print_color(f"No answer found: {agent_response.to_action_msg()}", Fore.RED)
+                    if thought != "":
+                        for chunk in st.fake_chat_completion_stream(thought):
+                            logs.print_color(st.content_of(chunk), Fore.LIGHTGREEN_EX, end="")
+                            yield chunk # type: ignore
+                    else:
+                        for chunk in st.fake_chat_completion_stream(f"Xin lỗi bạn nha, hiện tại mình không có đủ dữ liệu để trả lời câu hỏi của bạn. Mình sẽ cập nhật thêm ở những phiên bản sau nhé"):
+                            logs.print_color(st.content_of(chunk), Fore.LIGHTGREEN_EX, end="")
+                            yield chunk # type: ignore
+    
                 stop = True
             
             previous_action = action
@@ -163,7 +175,7 @@ if __name__=="__main__":
     agent = LibraAgent()
     
     response = agent.step(messages=[
-        {"role": "user", "content": "cùng nhảy nào, bạn của tôi ơi, tằng tắng tăng tăng!"},
+        {"role": "user", "content": "Tổng giám đốc và chủ tịch thì ai lớn tuổi hơn"},
     ])
     
     for chunk in response:

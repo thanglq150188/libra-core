@@ -1,8 +1,14 @@
+import asyncio
 from libra.types import ChatCompletionChunk
-from openai import Stream
-from typing import Dict, List, Tuple
+from openai import AsyncStream
+from typing import Dict, List, Tuple, AsyncGenerator
 from enum import Enum
 import json
+import time
+import tiktoken
+from openai.types.chat.chat_completion_chunk import Choice, ChoiceDelta
+import libra.logs as logs
+from colorama import Fore
 
 
 def is_valid(chunk: ChatCompletionChunk) -> bool: # type: ignore
@@ -37,15 +43,13 @@ def join_content_of(chunks: List[ChatCompletionChunk]) -> str: # type: ignore
         content += content_of(chunk)
     return content
 
-
-def first_chunk_of(
-    response: Stream[ChatCompletionChunk] # type: ignore
-) -> ChatCompletionChunk: # type: ignore    
-    first_chunk = response.__next__()
-    while not is_valid(first_chunk):
-        first_chunk = response.__next__()
-    return first_chunk
-
+async def first_chunk_of(
+    response: AsyncStream[ChatCompletionChunk] # type: ignore
+) -> ChatCompletionChunk: # type: ignore
+    async for chunk in response:
+        if is_valid(chunk):
+            return chunk
+    raise StopAsyncIteration("No valid chunks found")
 
 def tokens_from(text: str) -> List[str]: # type: ignore
     tokens = text.split(' ')
@@ -56,28 +60,18 @@ def tokens_from(text: str) -> List[str]: # type: ignore
     output_tokens = output_tokens[:-1]
     return output_tokens
 
-
-import time
-import tiktoken
-from openai.types.chat.chat_completion_chunk import Choice, ChoiceDelta
-
-
-def fake_chat_completion_stream(
+async def fake_chat_completion_stream(
     text: str, 
     model: str = "gpt-4o"
-) -> Stream[ChatCompletionChunk]: # type: ignore
-    # Initialize the tokenizer
+) -> AsyncGenerator[ChatCompletionChunk, None]: # type: ignore
     enc = tiktoken.encoding_for_model(model)
-    
-    # Tokenize the text
     tokens = enc.encode(text)
     
-    # Simulate streaming by yielding chunks of tokens
     for i, token in enumerate(tokens):
         chunk = ChatCompletionChunk(
             id=f"chatcmpl-{i}",
             object="chat.completion.chunk",
-            created=1677652288 + i,  # Fake timestamp
+            created=1677652288 + i,
             model=model,
             choices=[
                 Choice(
@@ -87,10 +81,9 @@ def fake_chat_completion_stream(
                 )
             ]
         )
-        time.sleep(0.01)
-        yield chunk # type: ignore
+        await asyncio.sleep(0.01)
+        yield chunk
     
-    # Yield the final chunk to indicate completion
     yield ChatCompletionChunk(
         id=f"chatcmpl-{len(tokens)}",
         object="chat.completion.chunk",
@@ -103,49 +96,54 @@ def fake_chat_completion_stream(
                 finish_reason="stop"
             )
         ]
-    ) # type: ignore
-
+    )
 
 ERROR_MSG = "Xin lỗi bạn nha, hiện tại mình đang gặp trục trặc kỹ thuật nên chưa thể trả lời câu hỏi này. Bạn vui lòng hỏi câu khác hoặc quay lại sau nhé? Cảm ơn bạn đã thông cảm!"
 
-
 class Verbal(Enum):
-    THOUGHT = "thought"
-    ANSWER = "answer"
-    ACTION = "action"
-    PARAMS = "params"
-    TEXT = "text"
-    
-    
+    THOUGHT = "THOUGHT"
+    ANSWER = "ANSWER"
+    ACTION = "ACTION"
+    PARAMS = "PARAMS"
+    TEXT = "TEXT"
+
+
 def verbal_of(chunk: ChatCompletionChunk) -> Verbal: # type: ignore
-    chunk_content = content_of(chunk).lower()
-    if chunk_content == "thought":
+    chunk_content = content_of(chunk)
+    if chunk_content == "Thought":
         return Verbal.THOUGHT
-    if chunk_content == "answer":
+    if chunk_content == "Answer":
         return Verbal.ANSWER
-    if chunk_content == "action":
+    if chunk_content == "Action":
         return Verbal.ACTION
-    if chunk_content == "params":
+    if chunk_content == "Params":
         return Verbal.PARAMS
     return Verbal.TEXT
-    
-    
-class AgentResponse:
-    
+
+
+def print_logs(text, flag: Verbal):
+    if flag == Verbal.TEXT:
+        logs.print_color(text, color=Fore.LIGHTGREEN_EX, end="")
+    if flag == Verbal.ACTION:
+        logs.print_color(text, color=Fore.LIGHTCYAN_EX, end="")
+    if flag == Verbal.PARAMS:
+        logs.print_color(text, color=Fore.CYAN, end="")
+    if flag == Verbal.THOUGHT:
+        logs.print_color(text, color=Fore.LIGHTCYAN_EX, end="")
+    if flag == Verbal.ANSWER:
+        logs.print_color(text, color=Fore.LIGHTGREEN_EX, end="")
+
+
+class AsyncAgentResponse:
     def __init__(
         self, 
-        source: Stream[ChatCompletionChunk] # type: ignore
+        source: AsyncStream[ChatCompletionChunk] # type: ignore
     ) -> None:
         self.source = source
         self.flag = Verbal.TEXT
-        self.component = {
-            Verbal.TEXT: "",
-            Verbal.ANSWER: "",
-            Verbal.THOUGHT: "",
-            Verbal.ACTION: "",
-            Verbal.PARAMS: ""
-        }
-        
+        self.component = {verbal: "" for verbal in Verbal}
+    
+    # Existing synchronous methods remain unchanged
     def action(self) -> str:
         return self.component[Verbal.ACTION]
     
@@ -160,30 +158,32 @@ class AgentResponse:
     
     def text(self) -> str:
         return self.component[Verbal.TEXT]
-        
-        
+    
     def reset_component(self):
         self.component = {chunk_type: "" for chunk_type in Verbal}
-        
-    def stream(self) -> Stream[ChatCompletionChunk]: # type: ignore
+    
+    async def astream(self) -> AsyncGenerator[ChatCompletionChunk, None]: # type: ignore
         first_token = True
         self.reset_component()
-        for chunk in self.source:
+        async for chunk in self.source:
             verbal = verbal_of(chunk)
             if verbal != Verbal.TEXT:
-                self.source.__next__()
+                await self.source.__anext__() # remove ':' sign
                 self.flag = verbal
                 first_token = True
+                print_logs(verbal.value + ": ", self.flag)
             else:
                 if first_token:
                     set_content(chunk, content_of(chunk).strip())
                     first_token = False
+                
+                print_logs(content_of(chunk), self.flag)
 
                 self.component[self.flag] += content_of(chunk)
                 if self.flag in [Verbal.TEXT, Verbal.ANSWER]:
-                    time.sleep(0.01)
+                    await asyncio.sleep(0.01)
                     if is_valid(chunk):
-                        yield chunk # type: ignore
+                        yield chunk
         
         self.component = {
             verbal: self.component[verbal].strip()
@@ -196,29 +196,27 @@ class AgentResponse:
             except json.JSONDecodeError:
                 self.component[Verbal.ACTION] = ""
                 self.component[Verbal.PARAMS] = ""
-                for chunk in fake_chat_completion_stream(ERROR_MSG):
-                    yield chunk # type: ignore
-                    
+                async for chunk in fake_chat_completion_stream(ERROR_MSG):
+                    yield chunk
+    
     def to_action_msg(self):
         return f"""Thought: {self.component[Verbal.THOUGHT]}
 Action: {self.component[Verbal.ACTION]}
 Params: {self.component[Verbal.PARAMS]}
 """
-        
 
-if __name__ == "__main__":
-
-    # Example usage
+async def main():
     text = """
+cuộc sống có giống cuộc đời lắm thay
 Thought: The current language of the user is Vietnamese. I need to use a tool to help me answer the question. Then I need to extract the input to chosen tool.
 Action: hihihaha
 Params: {"query": "taij sao lai"}
 """
 
-    agent_response = AgentResponse(fake_chat_completion_stream(text))
-    for chunk in agent_response.stream():
-        pass
-    # print()
+    agent_response = AsyncAgentResponse(fake_chat_completion_stream(text)) # type: ignore
+    async for chunk in agent_response.astream():
+        print(chunk)
     print(agent_response.to_action_msg())
-    
-    
+
+if __name__ == "__main__":
+    asyncio.run(main())
