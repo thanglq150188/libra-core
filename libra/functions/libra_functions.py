@@ -1,50 +1,16 @@
 from typing import List, Union, Dict
 
 from libra.functions import OpenAIFunction
-from libra.retrievers import VectorRetriever
-from libra.vectordb import QdrantStorage
-from libra.types import (
-    VectorDBLabel, 
-    EmbeddingLabel, 
-    EmbeddingCompany
-)
-from libra.embeddings import (
-    OpenAIEmbedding,
-    SentenceTransformerEncoder
-)
 
-from libra.config.common_config import CommonConfig
-from qdrant_client import QdrantClient
+from data.prepare_data import (
+    JOB_TITLE_RETRIEVER, 
+    JOB_DF,
+    MB_INFO_RETRIEVER
+)
 
 from dotenv import load_dotenv
-import os
 
 load_dotenv(override=True)
-
-if CommonConfig().vectordb != VectorDBLabel.QDRANT:
-    raise ValueError("This function requires Qdrant as the vector database")
-
-vectordb_instance = QdrantClient(
-    path=os.environ['LOCAL_QDRANT_PATH']
-)
-
-if CommonConfig().embedding.of_company == EmbeddingCompany.OPENAI:
-    emb_instance = OpenAIEmbedding()
-else:
-    emb_instance = SentenceTransformerEncoder(
-        model_name=os.environ["LOCAL_EMBEDDING_PATH"]
-    )
-
-mb_info_storage_instance = QdrantStorage(
-    client=vectordb_instance,
-    vector_dim=emb_instance.get_output_dim(),
-    collection_name="MBInfo"
-)
-
-mb_info_retriever = VectorRetriever(
-    embedding_model=emb_instance, 
-    storage=mb_info_storage_instance
-)
 
 
 def mb_information_retrieval(
@@ -68,7 +34,7 @@ def mb_information_retrieval(
         response = mb_information_retrieval("Bạn có biết mức lương của MB như thế nào không")
         response = mb_information_retrieval("Có bao nhiêu nhóm công việc và nhóm nghề nghiệp tại MB ?")
     """
-    results = mb_info_retriever.query(
+    results = MB_INFO_RETRIEVER.query(
         query=query,
         top_k=6
     )
@@ -104,94 +70,8 @@ def mb_network_retrieval():
     }
 
 
-import json
-
-with open("./data/new_jobs_data.json", "r", encoding="utf-8") as f:
-    data = json.load(f)
-    
-import re
-
-def parse_salaries(salary_data):
-    if isinstance(salary_data, str):
-        salaries = ("", "")
-        lines = salary_data.split('\n')
-        
-        for line in lines:
-            line = line.strip()
-            if not line:
-                continue
-            
-            # Check for "a - b VND" format
-            match = re.match(r'(\d{1,3}(?:,\d{3})*) - (\d{1,3}(?:,\d{3})*)\s*VNĐ', line)
-            if match:
-                min_salary = match.group(1).replace(',', '')
-                max_salary = match.group(2).replace(',', '')
-            else:
-                # For other formats, set min and max to the same value
-                # Remove "VNĐ" and any leading/trailing whitespace
-                value = line.replace('VNĐ', '').strip()
-                
-                # Try to extract a number if present
-                number_match = re.search(r'\d{1,3}(?:,\d{3})*', value)
-                if number_match:
-                    salary_value = int(number_match.group().replace(',', ''))
-                    min_salary = max_salary = salary_value
-                else:
-                    min_salary = 0
-                    max_salary = -1
-
-            salaries = (min_salary, max_salary)
-        
-        return salaries
-    else:
-        return (salary_data["junior"]["min"], salary_data["professional"]["max"])
-    
-
-refined_data = []
-
-for entry in data:    
-    salary_range = parse_salaries(entry["salary_range"])
-    min_salary = salary_range[0]
-    max_salary = salary_range[1]
-    refined_data.append({
-        "url": entry["url"],
-        "job_title": entry["job_title"],
-        "department": entry["department"],
-        "job_code": entry["job_code"],
-        "workplace": entry["workplace"],
-        "job_rank": entry["job_rank"],
-        "job_type": entry["job_type"],
-        "job_industry": [term.strip() for term in entry["job_industry"].split(",")],
-        "deadline_application": entry["deadline_application"],
-        "min_salary": min_salary,
-        "max_salary": max_salary,
-        "job_detail": entry["job_detail"],
-        "job_requirements": entry["job_requirements"]
-    })
-    
-
-import pandas as pd
-
-job_df = pd.DataFrame(refined_data)
-
-job_df['min_salary'] = job_df['min_salary'].astype(int)
-job_df['max_salary'] = job_df['max_salary'].astype(int)
-
 def contains_any(industry_list, search_terms):
     return any(any(term.lower() in industry.lower() for term in search_terms) for industry in industry_list)
-
-
-job_title_storage_instance = QdrantStorage(
-    client=vectordb_instance,
-    vector_dim=emb_instance.get_output_dim(),
-    collection_name="job_title"
-)
-
-job_title_retriever = VectorRetriever(
-    embedding_model=emb_instance,
-    storage=job_title_storage_instance,
-    similarity_threshold=0.6
-)
 
 
 def pandas_job_retrieval(
@@ -245,14 +125,14 @@ def pandas_job_retrieval(
     """
     
     remain_params = []
-    output_df = job_df.copy()
+    output_df = JOB_DF.copy()
     if workplace != "":
         output_df = output_df[output_df['workplace']==workplace]
     else:
         remain_params.append('workplace')
     
     if job_title != "":        
-        acquired_job_titles = [title['text'] for title in job_title_retriever.query(job_title, top_k=3)]        
+        acquired_job_titles = [title['text'] for title in JOB_TITLE_RETRIEVER.query(job_title, top_k=3)]        
         output_df = output_df[output_df['job_title'].isin(acquired_job_titles)]
     else:
         remain_params.append('job_title')
@@ -288,7 +168,7 @@ Jobs tìm được: {acquire_jobs}
 """
             else:
                 result = f"""
-Lưu ý: số lượng jobs tìm được khá lớn, nên yêu cầu khách hàng cung cấp thêm {remain_params} để khoanh vùng lại.             
+Lưu ý: số lượng jobs tìm được khá lớn, sau khi liệt kê các jobs tìm thấy xong nên yêu cầu khách hàng cung cấp thêm {remain_params} để khoanh vùng lại.             
 Jobs tìm được: {acquire_jobs}
 """
     return {

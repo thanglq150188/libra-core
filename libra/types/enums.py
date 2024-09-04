@@ -31,6 +31,7 @@ class ModelLabel(Enum):
     
 class EmbeddingCompany(Enum):
     OPENAI = "openai"
+    AZURE = "azure"
     OSS = "open_source"
     
     

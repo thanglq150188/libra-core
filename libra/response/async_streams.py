@@ -197,6 +197,7 @@ class AsyncAgentResponse:
                 self.component[Verbal.ACTION] = ""
                 self.component[Verbal.PARAMS] = ""
                 async for chunk in fake_chat_completion_stream(ERROR_MSG):
+                    print_logs(content_of(chunk), Verbal.TEXT)
                     yield chunk
     
     def to_action_msg(self):
@@ -215,7 +216,7 @@ Params: {"query": "taij sao lai"}
 
     agent_response = AsyncAgentResponse(fake_chat_completion_stream(text)) # type: ignore
     async for chunk in agent_response.astream():
-        print(chunk)
+        pass
     print(agent_response.to_action_msg())
 
 if __name__ == "__main__":

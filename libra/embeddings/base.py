@@ -20,8 +20,24 @@ class BaseEmbedding(ABC):
         """
         pass
     
+    @abstractmethod
+    def async_embed_list(self, objs: list[str], **kwargs: Any) -> list[list[float]]:
+        """
+        Abstract asynchronous method for embedding a list of text strings into a list of numerical vectors.
+
+        Parameters:
+            texts (list[str]): A list of text strings to be embedded.
+            **kwargs (Any): Extra kwargs passed to the embedding API.
+
+        Returns:
+            list[list[float]]: A list that represents the
+                generated embedding as a list of floating-point numbers.
+        """
+        pass
+    
     def embed(
         self,
+
         obj: str,
         **kwargs: Any,
     ) -> list[float]:
@@ -36,6 +52,7 @@ class BaseEmbedding(ABC):
                 generated embedding.
         """
         return self.embed_list([obj], **kwargs)[0]
+    
     
     @abstractmethod
     def get_output_dim(self) -> int:

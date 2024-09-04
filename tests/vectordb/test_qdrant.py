@@ -1,84 +1,44 @@
-import shutil
-import tempfile
+import asyncio
+import time
+import numpy as np
+from qdrant_client import QdrantClient
+from dotenv import load_dotenv
+import os
 
-from libra.vectordb import QdrantStorage, VectorDBQuery, VectorRecord
+load_dotenv(override=True)
 
+# Constants
+NUM_CONCURRENT_USERS = 10000
+VECTOR_SIZE = 1024
+COLLECTION_NAME = "MBInfo"  # Replace with your actual collection name
 
-def test_multiple_local_clients() -> None:
-    tmpdir = tempfile.mkdtemp()
-    storage1 = QdrantStorage(
-        vector_dim=4,
-        path=tmpdir,
-        collection_name="collection1",
-        delete_collection_on_del=True,
+# Initialize Qdrant client
+client = QdrantClient(path="./libra_qdrant_backup.db")
+
+async def perform_query(client, query_id):
+    # Generate a random query vector
+    query_vector = np.random.rand(VECTOR_SIZE).tolist()
+    
+    # Perform a search operation
+    results = client.search(
+        collection_name=COLLECTION_NAME,
+        query_vector=query_vector,
+        limit=5
     )
-    storage2 = QdrantStorage(
-        vector_dim=4,
-        path=tmpdir,
-        collection_name="collection2",
-        delete_collection_on_del=True,
-    )
+    return f"Query {query_id} completed"
 
-    # Add vectors to storage1
-    vectors1 = [
-        VectorRecord(vector=[0.1, 0.1, 0.1, 0.1]),
-        VectorRecord(vector=[0.1, -0.1, -0.1, 0.1]),
-    ]
-    storage1.add(records=vectors1)
+async def run_concurrent_queries():
+    tasks = [perform_query(client, i) for i in range(NUM_CONCURRENT_USERS)]
+    return await asyncio.gather(*tasks)
 
-    # Add vectors to storage2
-    vectors2 = [
-        VectorRecord(
-            vector=[-0.1, 0.1, -0.1, 0.1],
-            payload={"message": "text"},
-        ),
-        VectorRecord(
-            vector=[-0.1, 0.1, 0.1, 0.1],
-            payload={"message": "text", "number": 1},
-        ),
-    ]
-    storage2.add(records=vectors2)
+def run_benchmark():
+    start_time = time.time()
+    asyncio.run(run_concurrent_queries())
+    end_time = time.time()
+    
+    total_time = end_time - start_time
+    print(f"Time taken for {NUM_CONCURRENT_USERS} concurrent queries: {total_time:.2f} seconds")
+    print(f"Average time per query: {total_time/NUM_CONCURRENT_USERS:.4f} seconds")
 
-    # Query and check results from storage1
-    query1 = VectorDBQuery(query_vector=[1.0, 1.0, 1.0, 1.0], top_k=1)
-    result1 = storage1.query(query1)
-    assert result1[0].record.id == vectors1[0].id
-
-    # Query and check results from storage2
-    query2 = VectorDBQuery(query_vector=[-1.0, 1.0, -1.0, 1.0], top_k=1)
-    result2 = storage2.query(query2)
-    assert result2[0].record.id == vectors2[0].id
-    assert result2[0].record.payload == {"message": "text"}
-
-    # Clear and check status for each storage
-    storage1.clear()
-    status1 = storage1.status()
-    assert status1.vector_count == 0
-
-    storage2.clear()
-    status2 = storage2.status()
-    assert status2.vector_count == 0
-
-    shutil.rmtree(tmpdir)
-
-
-def test_existing_collection():
-    tmpdir = tempfile.mkdtemp()
-    storage = QdrantStorage(
-        vector_dim=4,
-        path=tmpdir,
-        collection_name="test_collection",
-    )
-    vectors = [
-        VectorRecord(vector=[0.1, 0.1, 0.1, 0.1]),
-        VectorRecord(vector=[0.1, -0.1, -0.1, 0.1]),
-    ]
-    storage.add(records=vectors)
-    assert storage.status().vector_count == 2
-
-    storage2 = QdrantStorage(
-        vector_dim=4,
-        path=tmpdir,
-        collection_name="test_collection",
-    )
-    assert storage2.status().vector_count == 2
+if __name__ == "__main__":
+    run_benchmark()

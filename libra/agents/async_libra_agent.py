@@ -20,7 +20,10 @@ from libra.types import ChatCompletionChunk
 from openai import AsyncStream
 import libra.logs as logs
 import libra.response.async_streams as st
-from libra.config.common_config import CommonConfig
+from libra.config import (
+    CHATGPT_CONFIG,
+    COMMON_CONFIG
+)
 
 from dotenv import load_dotenv
 
@@ -40,19 +43,25 @@ def set_event_loop_policy():
 set_event_loop_policy()
 
 
+NOT_ENOUGH_DATA_MSG = "Xin lỗi bạn nha, hiện tại mình không có đủ dữ liệu để trả lời câu hỏi của bạn. Mình sẽ cập nhật thêm ở những phiên bản sau nhé"
+EXCEPTION_MSG = "Xin lỗi bạn nha, hiện tại mình gặp một chút trục trặc nên không thể câu hỏi của bạn. Mình sẽ cập nhật sửa chữa thêm ở những phiên bản sau nhé"
+
+
 def create_libra_system_prompt(
     inner_system_message: str,
     tools: List[OpenAIFunction]
 ) -> str:
     tools_desc = []
 
-    for func in tools:
+    def process_tool(func):
         tool_desc = TOOL_FORMAT_PROMPT.format(
             tool_name = func.get_function_name(),
             tool_description = func.get_function_description(),
             tool_argument = func.get_openai_tool_schema()['function']['parameters'],
         )
-        tools_desc.append(tool_desc)                
+        return tool_desc
+
+    tools_desc = [process_tool(func) for func in tools]
     tool_names = [func.get_function_name() for func in tools]
     
     prompt = LLAMAINDEX_REACT_PROMPT.format(
@@ -64,14 +73,14 @@ def create_libra_system_prompt(
     return prompt
 
 
-def create_prompts(
+async def create_prompts(
     system_message, 
     conversation
 ) -> List[OpenAIMessage]: # type: ignore
     prompts: List[OpenAIMessage] = [ # type: ignore
         {"role": "system", "content": system_message}
     ]
-    window_size = CommonConfig().window_size
+    window_size = COMMON_CONFIG.window_size
     limit = 2 * window_size + 1
     last_messages = conversation[-limit:] if len(conversation) > limit else conversation
     prompts.extend(last_messages)
@@ -93,12 +102,8 @@ class AsyncLibraAgent:
             model
             if model is not None
             else ModelFactory.create(
-                model_label=CommonConfig().model,
-                model_config_dict=ChatGPTConfig(
-                    stream=True,
-                    temperature=0.0,
-                    top_p=0.00001
-                ).__dict__
+                model_label=COMMON_CONFIG.model,
+                model_config_dict=CHATGPT_CONFIG.__dict__
             )
         )                
         
@@ -119,16 +124,19 @@ class AsyncLibraAgent:
                 if system_message is not None
                 else SYSTEM_INIT_PROMPT
             )
-        )            
+        )
+        
+    async def execute_tool(self, action: str, params: Dict) -> Dict:
+        return await asyncio.to_thread(self.tool_dict[action], **params)
     
     async def astep(
         self,
         messages: List[OpenAIMessage], # type: ignore
     ) -> AsyncGenerator[ChatCompletionChunk, None]: # type: ignore
         try:
-            prompts = create_prompts(self.system_message, messages)
+            prompts = await create_prompts(self.system_message, messages)
             
-            logs.print_color(f"Question: {messages[-1]['content']}", Fore.YELLOW) # type: ignore
+            logs.print_color(f"\nQuestion: {messages[-1]['content']}", Fore.YELLOW) # type: ignore
 
             action_count = 0
             previous_action = None
@@ -142,45 +150,41 @@ class AsyncLibraAgent:
                 
                 action = agent_response.action()
                 if action != "":
+                    stop = True
                     params = json.loads(agent_response.params())
-                    tool_result = self.tool_dict[action](**params)
+                    tool_result = await self.execute_tool(action, params)
                     
-                    logs.print_color('\n> ' + tool_result['display'], Fore.LIGHTBLUE_EX)
+                    logs.print_color('\n> ' + tool_result['display'], Fore.LIGHTBLUE_EX)                    
 
                     if action != previous_action:
                         action_count += 1
                     
-                    if action == previous_action or action_count >= 2:
-                        # Return the lastest state
-                        stop = True
-                        prompts = create_prompts(SYSTEM_ANSWER_PROMPT, messages)
-                        response = await self.model.run_async(messages=prompts)
-                        agent_response = st.AsyncAgentResponse(response) # type: ignore
-                        async for chunk in agent_response.astream():
-                            yield chunk # type: ignore
-                    else:
-                        prompts.extend([
-                            {"role": "assistant", "content": agent_response.to_action_msg()},
-                            {"role": "user", "content": f"Observation: {tool_result['document']}"}
-                        ])
+                    prompts = await create_prompts(SYSTEM_ANSWER_PROMPT.format(document=tool_result['document']), messages)
+                    response = await self.model.run_async(messages=prompts)
+                    agent_response = st.AsyncAgentResponse(response) # type: ignore
+                    async for chunk in agent_response.astream():
+                        yield chunk # type: ignore
                 else:
                     text = agent_response.text()
                     answer = agent_response.answer()
                     thought = agent_response.thought()
                     if text == "" and answer == "":
-                        logs.print_color(f"No answer found: {agent_response.to_action_msg()}", Fore.RED)
+                        logs.print_color(f"\nNo answer found: {agent_response.to_action_msg()}", Fore.RED)
                         if thought != "":
                             async for chunk in st.fake_chat_completion_stream(thought):
+                                logs.print_color(st.content_of(chunk), Fore.LIGHTGREEN_EX, end='')
                                 yield chunk # type: ignore
                         else:
-                            async for chunk in st.fake_chat_completion_stream(f"Xin lỗi bạn nha, hiện tại mình không có đủ dữ liệu để trả lời câu hỏi của bạn. Mình sẽ cập nhật thêm ở những phiên bản sau nhé"):
+                            async for chunk in st.fake_chat_completion_stream(EXCEPTION_MSG):
+                                logs.print_color(st.content_of(chunk), Fore.LIGHTGREEN_EX, end='')
                                 yield chunk # type: ignore
         
                     stop = True
                 
                 previous_action = action
         except Exception as e:
-            async for chunk in st.fake_chat_completion_stream(f"Xin lỗi bạn nha, hiện tại mình gặp một chút trục trặc nên không thể câu hỏi của bạn. Mình sẽ cập nhật sửa chữa thêm ở những phiên bản sau nhé"):
+            async for chunk in st.fake_chat_completion_stream(EXCEPTION_MSG):
+                logs.print_color(st.content_of(chunk), Fore.LIGHTGREEN_EX, end='')
                 yield chunk # type: ignore
             
 
@@ -188,7 +192,7 @@ async def main():
     agent = AsyncLibraAgent()
     
     async for chunk in agent.astep(messages=[
-        {"role": "user", "content": "MB có tất cả bao nhiêu chi nhánh tại Sài Gòn"},
+        {"role": "user", "content": "tôi giỏi văn, mà lại dốt toán, tôi nên theo hướng nghề nghiệp nào?"},
     ]):
         pass
 

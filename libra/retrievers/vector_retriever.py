@@ -10,7 +10,7 @@ from libra.vectordb import (
 )
 from qdrant_client import QdrantClient
 
-DEFAULT_TOP_K_RESULTS = 1
+DEFAULT_TOP_K_RESULTS = 4
 DEFAULT_SIMILARITY_THRESHOLD = 0.0
 
 

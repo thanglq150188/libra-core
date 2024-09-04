@@ -7,7 +7,7 @@ from libra.models.model_factory import ModelFactory
 from libra.types.enums import ModelLabel
 from typing import Dict, Any
 from libra.config import ChatGPTConfig
-from libra.agents.libra_agent import LibraAgent
+from libra.agents.async_libra_agent import AsyncLibraAgent
 from libra.functions.retrieval_functions import job_retrieval
 
 
@@ -22,7 +22,7 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
-chat_agent = LibraAgent()
+chat_agent = AsyncLibraAgent()
 
 
 @app.get("/actuator/health", status_code=200)
@@ -32,11 +32,7 @@ async def health_check():
 
 async def stream_response(data: Dict[str, Any]):
     messages = data.get("messages", [])    
-    response = chat_agent.step(
-        messages=messages
-    )
-    
-    for chunk in response:
+    async for chunk in chat_agent.astep(messages=messages):
         yield f"data: {chunk.json()}\n\n"
     
     yield "data: [DONE]\n\n"

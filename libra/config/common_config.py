@@ -15,7 +15,8 @@ from libra.config import BaseConfig
 @dataclass(frozen=True)
 class CommonConfig(BaseConfig):
     model: ModelLabel = ModelLabel.GPT_4o
-    embedding: EmbeddingLabel = EmbeddingLabel.BGE_M3
+    embedding: EmbeddingCompany = EmbeddingCompany.OPENAI
     vectordb: VectorDBLabel = VectorDBLabel.QDRANT
-    window_size: int = 4        
+    window_size: int = 4
+    reload_data: bool = False
     
