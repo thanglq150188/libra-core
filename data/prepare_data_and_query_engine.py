@@ -1,6 +1,7 @@
 from libra.retrievers import VectorRetriever
 from libra.vectordb import QdrantStorage
-from libra.embeddings import OpenAIEmbedding
+from libra.types import EmbeddingCompany
+from libra.embeddings import OpenAIEmbedding, AzureOpenAIEmbedding
 from qdrant_client import QdrantClient
 from typing import List, Dict
 from libra.config import COMMON_CONFIG
@@ -9,7 +10,10 @@ from dotenv import load_dotenv
 
 load_dotenv(override=True)
 
-embedding_instance = OpenAIEmbedding()
+if COMMON_CONFIG.embedding == EmbeddingCompany.OPENAI:
+    embedding_instance = OpenAIEmbedding()
+elif COMMON_CONFIG.embedding == EmbeddingCompany.AZURE:
+    embedding_instance = AzureOpenAIEmbedding()
 
 client = QdrantClient(
     path=os.environ['LOCAL_QDRANT_PATH']
