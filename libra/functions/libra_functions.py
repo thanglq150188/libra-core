@@ -2,7 +2,7 @@ from typing import List, Union, Dict
 
 from libra.functions import OpenAIFunction
 
-from data.prepare_data import (
+from data.prepare_data_and_query_engine import (
     JOB_TITLE_RETRIEVER, 
     JOB_DF,
     MB_INFO_RETRIEVER
